@@ -1,12 +1,5 @@
-import { fmtTHB } from '../lib/money.js';
+import PriceAmount from './ui/PriceAmount.jsx';
 import { useDisplayPrice } from '../context/PromoContext.jsx';
-
-const SIZE_CLASS = {
-  sm: 'text-base',
-  md: 'text-lg',
-  lg: 'text-xl',
-  xl: 'text-2xl',
-};
 
 export default function PromoPriceDisplay({
   value,
@@ -19,20 +12,21 @@ export default function PromoPriceDisplay({
   const lo = useDisplayPrice(min ?? value ?? 0);
   const hi = useDisplayPrice(max ?? value ?? 0);
   const single = useDisplayPrice(value ?? min ?? 0);
-  const sizeClass = SIZE_CLASS[size] || SIZE_CLASS.md;
 
   if (hasRange) {
     const showStrike = lo.hasDiscount || hi.hasDiscount;
     return (
       <div className={`flex flex-wrap items-baseline gap-2 ${className}`.trim()}>
         {showStrike && (
-          <span className="text-sm text-muted line-through">
-            {fmtTHB(lo.basePrice)}-{fmtTHB(hi.basePrice)}
-          </span>
+          <PriceAmount
+            min={lo.basePrice}
+            max={hi.basePrice}
+            size="sm"
+            muted
+            strike
+          />
         )}
-        <span className={`font-bold text-primary ${sizeClass}`}>
-          {fmtTHB(lo.displayPrice)}-{fmtTHB(hi.displayPrice)}
-        </span>
+        <PriceAmount min={lo.displayPrice} max={hi.displayPrice} size={size} />
       </div>
     );
   }
@@ -41,9 +35,9 @@ export default function PromoPriceDisplay({
   return (
     <div className={`flex flex-wrap items-baseline gap-2 ${className}`.trim()}>
       {hasDiscount && (
-        <span className="text-sm text-muted line-through">{fmtTHB(basePrice)}</span>
+        <PriceAmount value={basePrice} size="sm" muted strike />
       )}
-      <span className={`font-bold text-primary ${sizeClass}`}>{fmtTHB(displayPrice)}</span>
+      <PriceAmount value={displayPrice} size={size} />
     </div>
   );
 }

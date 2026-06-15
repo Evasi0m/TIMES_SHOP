@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { fmtTHB } from '../../lib/money.js';
 import { getProductDisplayLines, getProductImageAlt } from '../../lib/product-display.js';
 import ProductImage from '../ProductImage.jsx';
 import QuantityStepper from '../ui/QuantityStepper.jsx';
+import PriceAmount from '../ui/PriceAmount.jsx';
 import { TrashIcon } from '../icons.jsx';
 
 export default function CartLineItem({ item, onQuantityChange, onRemove }) {
@@ -25,7 +25,7 @@ export default function CartLineItem({ item, onQuantityChange, onRemove }) {
           {title}
         </Link>
         {subtitle && <p className="truncate text-sm text-muted">{subtitle}</p>}
-        <p className="mt-1 text-lg font-bold text-primary">{fmtTHB(item.unit_price)}</p>
+        <PriceAmount value={item.unit_price} size="md" className="mt-1" />
         {overStock && (
           <p className="text-xs text-error">คงเหลือเพียง {item.stock_available} ชิ้น</p>
         )}
