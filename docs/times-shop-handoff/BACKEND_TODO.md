@@ -114,6 +114,8 @@
 | `shop-upsert-address` | `shop-upsert-address/index.ts` | **required** |
 | `shop-list-addresses` | `shop-list-addresses/index.ts` | **required** |
 | `shop-get-payment-info` | `shop-get-payment-info/index.ts` | optional |
+| `shop-admin-settings-get` | `shop-admin-settings-get/index.ts` | admin JWT |
+| `shop-admin-settings-update` | `shop-admin-settings-update/index.ts` | admin JWT |
 | `shop-upload-slip` | `shop-upload-slip/index.ts` | **required** |
 | `shop-verify-slip` | `shop-verify-slip/index.ts` | **required** |
 | `shop-admin-products-list` | `shop-admin-products-list/index.ts` | admin JWT |

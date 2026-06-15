@@ -15,10 +15,14 @@ const MESSAGES = {
   validation_failed: 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง',
   invalid_file: 'ไฟล์สลิปไม่ถูกต้อง (รองรับ JPG/PNG/PDF ไม่เกิน 5MB)',
   google_unconfigured: 'ยังไม่ได้ตั้งค่า Google Sign-in',
+  network_error: 'เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ — กรุณาลองใหม่อีกครั้ง',
+  'Failed to send a request to the Edge Function':
+    'ยังไม่พร้อมบนเซิร์ฟเวอร์ — กรุณาลองใหม่ภายหลังหรือติดต่อผู้ดูแลระบบ',
 };
 
 export function mapError(error) {
   if (!error) return 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
-  const key = typeof error === 'string' ? error : error.code || error.message || '';
-  return MESSAGES[key] || (typeof error === 'string' ? error : error.message) || 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+  const key = typeof error === 'string' ? error : error.code || error.message || error.error || '';
+  const msg = typeof error === 'string' ? error : error.message;
+  return MESSAGES[key] || MESSAGES[msg] || msg || 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
 }

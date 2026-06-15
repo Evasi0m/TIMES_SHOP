@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminNav from '../../components/admin/AdminNav.jsx';
+import BannerAlert from '../../components/ui/BannerAlert.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useShipping } from '../../context/ShippingContext.jsx';
 import { shopApi } from '../../lib/shop-api.js';
@@ -68,6 +69,10 @@ export default function AdminShippingPage() {
       </div>
 
       <AdminNav />
+
+      <BannerAlert variant="info">
+        บันทึกใน browser ชั่วคราว — รอ backend TIMES_POS deploy จึงมีผลกับลูกค้าทุกคน
+      </BannerAlert>
 
       <section className="card-canvas space-y-4 p-4 lg:p-6">
         <div className="rounded-lg bg-surface-soft px-4 py-3 text-sm text-body">

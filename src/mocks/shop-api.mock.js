@@ -1,7 +1,8 @@
 // DEV-ONLY mock — NOT POS products, NOT real TikTok data.
 // Production catalog: shop-get-catalog → storefront_products (synced from TikTok Shop API).
 
-import { buildShippingInfo, DEFAULT_SHIPPING_FEE, normalizeShippingFee } from '../lib/shipping.js';
+import { DEFAULT_SHIPPING_FEE, normalizeShippingFee } from '../lib/shipping.js';
+import { getClientShippingInfo, writeClientShippingFee } from '../lib/shipping-store.js';
 import {
   adminDistributePromo,
   adminListCustomers,
@@ -352,24 +353,8 @@ const readAddrs = () => {
 };
 const writeAddrs = (a) => localStorage.setItem(ADDR_KEY, JSON.stringify(a));
 
-const SHIPPING_KEY = 'times_shop_shipping_fee';
-
-function readShippingFee() {
-  try {
-    const raw = localStorage.getItem(SHIPPING_KEY);
-    if (raw === null) return DEFAULT_SHIPPING_FEE;
-    return normalizeShippingFee(Number(raw), DEFAULT_SHIPPING_FEE);
-  } catch {
-    return DEFAULT_SHIPPING_FEE;
-  }
-}
-
-function writeShippingFee(fee) {
-  localStorage.setItem(SHIPPING_KEY, String(normalizeShippingFee(fee, DEFAULT_SHIPPING_FEE)));
-}
-
 function getMockShippingInfo() {
-  return buildShippingInfo(readShippingFee());
+  return getClientShippingInfo();
 }
 
 const ORDERS_KEY = 'times_shop_mock_orders';
@@ -753,7 +738,7 @@ export const mockApi = {
     if (shipping_fee == null || !Number.isFinite(Number(shipping_fee)) || Number(shipping_fee) < 0) {
       return { ok: false, error: 'validation_failed', message: 'กรุณากรอกค่าจัดส่งที่ถูกต้อง' };
     }
-    writeShippingFee(shipping_fee);
+    writeClientShippingFee(shipping_fee);
     const info = getMockShippingInfo();
     return { ok: true, ...info };
   },

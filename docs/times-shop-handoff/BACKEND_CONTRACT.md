@@ -608,6 +608,38 @@ HTTP status **200** เสมอ (pattern เดียวกับ `tiktok-produ
 
 ---
 
+### 4.7b Admin shop settings
+
+#### `shop-admin-settings-get`
+
+**Auth:** admin JWT
+
+**Response:**
+```json
+{
+  "ok": true,
+  "shipping_fee": 29,
+  "shipping_label": "฿29"
+}
+```
+
+#### `shop-admin-settings-update`
+
+**Auth:** admin JWT
+
+**Request:**
+```json
+{
+  "shipping_fee": 29
+}
+```
+
+**Response:** same shape as get
+
+> TIMES_SHOP interim: ใช้ client localStorage จน deploy functions นี้ใน TIMES_POS
+
+---
+
 ### 4.8 `shop-upload-slip`
 
 **Auth:** customer JWT **หรือ guest (ไม่มี JWT)**  
@@ -677,6 +709,8 @@ Guest: `storage_path` = `payment-slips/guest/{uuid}.jpg` (private bucket)
 | `shop-admin-bank-delete` | |
 | `shop-admin-slips-queue` | คิว `pending_review` |
 | `shop-admin-slip-review` | approve / reject + note |
+| `shop-admin-settings-get` | อ่าน `shop_settings.shipping_fee` |
+| `shop-admin-settings-update` | อัปเดต `shipping_fee` (admin `/admin/shipping`) |
 
 ---
 

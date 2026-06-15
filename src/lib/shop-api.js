@@ -3,6 +3,7 @@
 // from here, so swapping to real backend requires no page changes.
 
 import { USE_MOCK_API } from './config.js';
+import { mergeClientShippingIntoResponse } from './shipping-store.js';
 import { supabase } from './supabase.js';
 import { mockApi } from '../mocks/shop-api.mock.js';
 
@@ -57,8 +58,11 @@ export const shopApi = {
     // Reuse my-orders on the real backend until a dedicated endpoint exists.
     return USE_MOCK_API ? mockApi.getOrder(params) : invoke('shop-get-my-orders', params);
   },
-  getPaymentInfo() {
-    return USE_MOCK_API ? mockApi.getPaymentInfo() : invoke('shop-get-payment-info', {});
+  async getPaymentInfo() {
+    if (USE_MOCK_API) return mockApi.getPaymentInfo();
+    const res = await invoke('shop-get-payment-info', {});
+    if (!res.ok) return mockApi.getPaymentInfo();
+    return mergeClientShippingIntoResponse(res);
   },
   uploadSlip(file, options = {}) {
     // TODO(TIMES_POS): guest checkout — optional JWT on shop-upload-slip / shop-verify-slip
@@ -79,14 +83,12 @@ export const shopApi = {
   deleteAddress(params) {
     return USE_MOCK_API ? mockApi.deleteAddress(params) : invoke('shop-delete-address', params);
   },
-  // TODO(TIMES_POS): deploy shop-admin-settings-get / shop-admin-settings-update
+  // TODO(TIMES_POS): switch to invoke when shop-admin-settings-* deployed
   adminGetShopSettings() {
-    return USE_MOCK_API ? mockApi.adminGetShopSettings() : invoke('shop-admin-settings-get', {});
+    return mockApi.adminGetShopSettings();
   },
   adminUpdateShopSettings(payload) {
-    return USE_MOCK_API
-      ? mockApi.adminUpdateShopSettings(payload)
-      : invoke('shop-admin-settings-update', payload);
+    return mockApi.adminUpdateShopSettings(payload);
   },
   // TODO(TIMES_POS): deploy shop-get-active-promos, shop-admin-promo-*
   getActivePromos(params) {
