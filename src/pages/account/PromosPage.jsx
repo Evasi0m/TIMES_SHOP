@@ -1,0 +1,64 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { shopApi } from '../../lib/shop-api.js';
+import { formatPromoDiscount, formatPromoPeriod } from '../../lib/promo-display.js';
+import { PROMO_TYPE_LABELS } from '../../lib/promo-types.js';
+
+export default function PromosPage() {
+  const { user } = useAuth();
+  const [promos, setPromos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    shopApi.getMyPromos({ user_id: user.id }).then((res) => {
+      if (res.ok) setPromos(res.promos || []);
+      setLoading(false);
+    });
+  }, [user?.id]);
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div>
+        <Link to="/account" className="text-sm text-muted transition hover:text-primary">
+          ← กลับบัญชี
+        </Link>
+        <h1 className="mt-2 font-display text-3xl text-ink lg:text-4xl">สิทธิ์ส่วนลดของฉัน</h1>
+        <p className="mt-2 text-sm text-body">
+          โปรที่ร้านแจกให้คุณ — ใช้งานอัตโนมัติ ไม่ต้องกรอก code
+        </p>
+      </div>
+
+      {loading ? (
+        <p className="text-muted">กำลังโหลด...</p>
+      ) : promos.length === 0 ? (
+        <div className="card-canvas p-6 text-center text-body">
+          ยังไม่มีโปรเฉพาะบัญชี — โปรทั้งร้านจะใช้ได้อัตโนมัติเมื่อร้านเปิดใช้งาน
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {promos.map((promo) => (
+            <li key={promo.id} className="card-canvas p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span
+                    className={`text-xs font-medium ${
+                      promo.status === 'active' ? 'text-success' : 'text-muted'
+                    }`}
+                  >
+                    {promo.status === 'active' ? 'ใช้งานได้' : 'หมดอายุ'}
+                  </span>
+                  <h2 className="mt-1 font-display text-lg text-ink">{promo.display_name}</h2>
+                  <p className="text-sm font-semibold text-primary">{formatPromoDiscount(promo)}</p>
+                  <p className="mt-1 text-xs text-muted">{PROMO_TYPE_LABELS[promo.promo_type]}</p>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-muted">{formatPromoPeriod(promo)}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

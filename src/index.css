@@ -1,0 +1,41 @@
+@import './styles/tokens.css';
+@import './styles/components.css';
+@import './styles/shop-layout.css';
+@import './styles/product-pdp.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--body-mesh), rgb(var(--c-canvas));
+  background-attachment: fixed;
+  color: rgb(var(--c-ink));
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+select,
+textarea,
+optgroup {
+  font: inherit;
+}

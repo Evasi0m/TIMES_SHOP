@@ -1,0 +1,86 @@
+import { fmtTHB } from '../../lib/money.js';
+
+export default function OrderSummaryCard({
+  subtotal,
+  shippingFee = 0,
+  shippingLabel,
+  shippingBase,
+  promoBreakdown = [],
+  grandTotal,
+  itemLines,
+  submitLabel,
+  onSubmit,
+  submitting = false,
+  submitType = 'button',
+  extraAction,
+  className = '',
+}) {
+  const total = grandTotal ?? subtotal + shippingFee;
+  const shippingText = shippingLabel ?? (shippingFee <= 0 ? 'ส่งฟรี' : fmtTHB(shippingFee));
+  const showShippingStrike =
+    shippingBase != null && shippingBase > shippingFee && shippingFee === 0;
+
+  return (
+    <div className={`card-canvas space-y-3 p-4 lg:p-6 ${className}`.trim()}>
+      <h2 className="font-display text-xl text-ink">สรุปคำสั่งซื้อ</h2>
+
+      {itemLines && itemLines.length > 0 && (
+        <ul className="space-y-2 text-sm">
+          {itemLines.map((line) => (
+            <li key={line.key} className="flex justify-between gap-2">
+              <span className="text-body">{line.label}</span>
+              <span className="font-medium text-ink">{line.amount}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="flex justify-between text-sm">
+        <span className="text-body">ยอดสินค้า</span>
+        <span className="font-medium text-ink">{fmtTHB(subtotal)}</span>
+      </div>
+
+      {promoBreakdown.map((line) => (
+        <div key={`${line.id}-${line.promo_type}`} className="flex justify-between text-sm">
+          <span className="text-body">{line.display_name}</span>
+          <span className="font-medium text-success">-{fmtTHB(line.amount)}</span>
+        </div>
+      ))}
+
+      <div className="flex justify-between text-sm">
+        <span className="text-body">ค่าจัดส่ง</span>
+        <span className={`font-medium ${shippingFee <= 0 ? 'text-primary' : 'text-ink'}`}>
+          {showShippingStrike && (
+            <span className="mr-2 text-muted line-through">{fmtTHB(shippingBase)}</span>
+          )}
+          {shippingText}
+        </span>
+      </div>
+
+      <div className="flex justify-between border-t border-hairline pt-3">
+        <span className="font-semibold text-ink">รวมทั้งสิ้น</span>
+        <span className="text-lg font-bold text-primary">{fmtTHB(total)}</span>
+      </div>
+
+      {submitLabel && (
+        <button
+          type={submitType}
+          disabled={submitting}
+          onClick={submitType === 'button' ? onSubmit : undefined}
+          className="btn-primary w-full opacity-100 disabled:pointer-events-none disabled:opacity-80"
+        >
+          {submitting ? (
+            <>
+              <span className="spinner" aria-hidden="true" />
+              กำลังดำเนินการ...
+            </>
+          ) : (
+            submitLabel
+          )}
+        </button>
+      )}
+
+      {extraAction}
+    </div>
+  );
+}

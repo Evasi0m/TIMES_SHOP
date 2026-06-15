@@ -1,0 +1,51 @@
+---
+description: TIMES_SHOP — scope, security, and backend contract
+alwaysApply: true
+---
+
+# TIMES_SHOP rules
+
+## Project context
+- TIMES_SHOP = customer-facing web store (separate repo from TIMES_POS)
+- Backend = same Supabase project as TIMES_POS — never create a new database
+- Product catalog syncs from TikTok Shop API via POS Edge Functions (not from browser)
+
+## Required reading before any feature work
+1. `docs/times-shop-handoff/SHOP_REQUIREMENTS.md`
+2. `docs/times-shop-handoff/BACKEND_CONTRACT.md`
+3. `docs/times-shop-handoff/SECURITY.md`
+4. `docs/times-shop-handoff/UI_GUIDE.md`
+
+## Hard rules (security)
+- NEVER query `products`, `sale_orders`, `sale_order_items` directly from the shop client
+- NEVER use service_role key in frontend
+- NEVER call `tiktok-products-search` or other POS/TikTok Edge Functions from the shop
+- NEVER expose cost_price, supplier data, or other shops' orders
+- NEVER copy or import from TIMES_POS `main.jsx` or POS-only components
+- ALL catalog/checkout APIs go through `shop-*` Edge Functions per BACKEND_CONTRACT
+- Re-validate cart server-side before placing orders — never trust client prices
+
+## Auth
+- Customers get `app_role: customer` in app_metadata (set by backend trigger)
+- Staff roles (admin/super_admin) may access `/admin` routes only with role check
+- Use anon key + customer JWT only
+
+## API
+- If backend not deployed yet: mock responses matching BACKEND_CONTRACT exactly
+- Toggle via `VITE_USE_MOCK_API=true`
+- Do not invent API shapes outside the contract
+
+## UI
+- Thai language primary
+- Mobile-first, cream + coral tokens from UI_GUIDE
+- Min touch target 44px
+- Copy money formatting pattern from POS `money.js` — do not duplicate POS UI shell
+
+## Backend changes
+- Supabase migrations and new Edge Functions belong in TIMES_POS repo — not here
+- If an API is missing, add a TODO and use mock — do not create migrations in TIMES_SHOP
+
+## Order flow
+- Order flow: web orders use TikTok stock for catalog; POS still cuts POS stock on confirm
+- Payment slips: admin manual review in `/admin` — no paid OCR services
+- Auth: disable Supabase Confirm email — checkout without email verification

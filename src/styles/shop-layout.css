@@ -1,0 +1,121 @@
+.main-mobile-pb {
+  padding-bottom: var(--mobile-clearance);
+}
+
+@media (min-width: 768px) {
+  .main-mobile-pb {
+    padding-bottom: 2rem;
+  }
+}
+
+.shop-header {
+  height: 56px;
+}
+
+@media (min-width: 768px) {
+  .shop-header {
+    height: 64px;
+  }
+}
+
+.bottom-tab-bar {
+  height: var(--mobile-tabbar-h);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: rgb(var(--c-surface-strong) / 0.95);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border-top: 1px solid rgb(var(--c-hairline));
+}
+
+.shop-tab {
+  position: relative;
+  display: flex;
+  min-height: var(--mobile-tabbar-h);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgb(var(--c-muted));
+  transition: color 0.15s;
+}
+
+.shop-tab--active {
+  color: rgb(var(--c-ink));
+  font-weight: 600;
+}
+
+.shop-tab--active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: rgb(var(--c-ink));
+}
+
+.toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--mobile-clearance) + 12px);
+  z-index: 70;
+  display: flex;
+  width: min(90vw, 360px);
+  transform: translateX(-50%);
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .toast-stack {
+    bottom: 24px;
+  }
+}
+
+.toast-stack--no-tab {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+.sticky-checkout-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  background: rgb(var(--c-surface-strong) / 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgb(var(--c-hairline));
+  box-shadow: var(--shadow-high);
+}
+
+@media (min-width: 768px) {
+  .sticky-checkout-bar {
+    display: none;
+  }
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--shop-card-gap);
+}
+
+@media (min-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

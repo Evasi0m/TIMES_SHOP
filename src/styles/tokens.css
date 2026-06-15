@@ -1,0 +1,66 @@
+/* TIMES STORE — TikTok Shop palette + liquid glass */
+:root {
+  --c-primary: 238 56 0;
+  --c-primary-active: 200 45 0;
+  --c-primary-disabled: 238 238 238;
+  --c-ink: 0 0 0;
+  --c-body: 51 51 51;
+  --c-body-strong: 0 0 0;
+  --c-muted: 102 102 102;
+  --c-muted-soft: 153 153 153;
+  --c-hairline: 238 238 238;
+  --c-hairline-soft: 238 238 238;
+  --c-canvas: 255 255 255;
+  --c-surface-soft: 238 238 238;
+  --c-surface-card: 255 255 255;
+  --c-surface-cream-strong: 245 245 245;
+  --c-surface-strong: 255 255 255;
+  --c-nightshade: 0 0 0;
+  --c-on-primary: 255 255 255;
+  --c-on-dark: 255 255 255;
+  --c-accent-teal: 82 168 153;
+  --c-accent-amber: 213 154 70;
+  --c-success: 76 153 119;
+  --c-warning: 196 133 41;
+  --c-error: 199 70 70;
+
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-bg-strong: rgba(255, 255, 255, 0.94);
+  --glass-border: rgba(238, 238, 238, 0.85);
+  --glass-border-cream: rgba(238, 56, 0, 0.1);
+
+  --rim-top: rgba(255, 255, 255, 0.92);
+  --rim-top-strong: rgba(255, 255, 255, 0.96);
+  --rim-top-bright: rgba(255, 255, 255, 0.99);
+  --rim-bot: rgba(238, 238, 238, 0.45);
+  --rim-bot-mid: rgba(238, 238, 238, 0.6);
+  --rim-bot-strong: rgba(200, 200, 200, 0.75);
+  --shadow-rgb: 0 0 0;
+  --shadow-low: 0 1px 0 var(--rim-top) inset, 0 -1px 0 var(--rim-bot) inset,
+    0 5px 16px -6px rgb(var(--shadow-rgb) / 0.08);
+  --shadow-mid: 0 1px 0 var(--rim-top-strong) inset, 0 -1px 0 var(--rim-bot-mid) inset,
+    0 12px 30px -10px rgb(var(--shadow-rgb) / 0.12);
+  --shadow-high: 0 1px 0 var(--rim-top-bright) inset, 0 -1px 0 var(--rim-bot-strong) inset,
+    0 20px 48px -16px rgb(var(--shadow-rgb) / 0.16);
+
+  --body-mesh:
+    radial-gradient(ellipse 60% 55% at 100% 0%, rgba(238, 56, 0, 0.06), transparent 66%),
+    radial-gradient(ellipse 60% 55% at 0% 100%, rgba(238, 56, 0, 0.035), transparent 66%),
+    radial-gradient(ellipse 46% 42% at 52% 46%, rgba(238, 238, 238, 0.35), transparent 72%);
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --shop-page-px: 16px;
+  --shop-section-gap: 24px;
+  --shop-card-gap: 12px;
+  --mobile-tabbar-h: 64px;
+  --mobile-clearance: calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --shop-page-px: 24px;
+    --shop-section-gap: 32px;
+    --shop-card-gap: 16px;
+  }
+}
