@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import AdminNav from '../../components/admin/AdminNav.jsx';
-import BannerAlert from '../../components/ui/BannerAlert.jsx';
+import AdminFormSection from '../../components/admin/AdminFormSection.jsx';
+import AdminPageShell from '../../components/admin/AdminPageShell.jsx';
+import ShippingBadge from '../../components/ShippingBadge.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useShipping } from '../../context/ShippingContext.jsx';
 import { shopApi } from '../../lib/shop-api.js';
@@ -11,7 +11,7 @@ import { DEFAULT_SHIPPING_FEE } from '../../lib/shipping.js';
 
 export default function AdminShippingPage() {
   const toast = useToast();
-  const { shippingFee, refresh } = useShipping();
+  const { shippingFee, shippingPromoText, refresh } = useShipping();
   const [feeInput, setFeeInput] = useState(String(DEFAULT_SHIPPING_FEE));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,56 +56,61 @@ export default function AdminShippingPage() {
     }
   }
 
+  const previewLabel = shippingFee <= 0 ? 'ส่งฟรี' : fmtTHB(shippingFee);
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <Link to="/account" className="text-sm text-muted transition hover:text-primary">
-          ← กลับบัญชี
-        </Link>
-        <h1 className="mt-2 font-display text-3xl text-ink lg:text-4xl">ตั้งค่าค่าจัดส่ง</h1>
-        <p className="mt-2 text-sm text-body">
-          ค่าจัดส่งแบบเหมาจ่ายต่อคำสั่งซื้อ — การแก้ไขมีผลกับทุกรายการในร้านทันที
-        </p>
-      </div>
-
-      <AdminNav />
-
-      <BannerAlert variant="info">
-        บันทึกใน browser ชั่วคราว — รอ backend TIMES_POS deploy จึงมีผลกับลูกค้าทุกคน
-      </BannerAlert>
-
-      <section className="card-canvas space-y-4 p-4 lg:p-6">
-        <div className="rounded-lg bg-surface-soft px-4 py-3 text-sm text-body">
-          ค่าจัดส่งปัจจุบัน:{' '}
-          <span className="font-semibold text-ink">
-            {shippingFee <= 0 ? 'ส่งฟรี' : fmtTHB(shippingFee)}
-          </span>
-        </div>
-
-        <form onSubmit={handleSave} className="space-y-4">
+    <AdminPageShell
+      title="ตั้งค่าค่าจัดส่ง"
+      subtitle="ค่าจัดส่งแบบเหมาจ่ายต่อคำสั่งซื้อ — การแก้ไขมีผลกับทุกรายการในร้านทันที"
+    >
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <section className="admin-card admin-card--pad admin-preview-panel">
           <div>
-            <label htmlFor="shipping-fee" className="mb-1.5 block text-sm font-semibold text-body-strong">
-              ค่าจัดส่ง (บาท) ต่อคำสั่งซื้อ
-            </label>
-            <input
-              id="shipping-fee"
-              type="number"
-              min="0"
-              step="1"
-              inputMode="decimal"
-              value={feeInput}
-              onChange={(e) => setFeeInput(e.target.value)}
-              className="input"
-              disabled={loading || saving}
-            />
-            <p className="mt-1.5 text-xs text-muted">ตั้งเป็น 0 หากต้องการส่งฟรี</p>
+            <p className="admin-preview-panel__label">ค่าจัดส่งปัจจุบัน</p>
+            <p className="admin-preview-panel__value">{previewLabel}</p>
           </div>
 
-          <button type="submit" disabled={loading || saving} className="btn-primary">
-            {saving ? 'กำลังบันทึก...' : 'บันทึกค่าจัดส่ง'}
-          </button>
-        </form>
-      </section>
-    </div>
+          <div className="admin-preview-panel__sample">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
+              ตัวอย่างบนหน้าร้าน
+            </p>
+            <ShippingBadge />
+            <p className="mt-3 text-sm text-body">{shippingPromoText}</p>
+          </div>
+        </section>
+
+        <section className="admin-card admin-card--pad">
+          <form onSubmit={handleSave}>
+            <AdminFormSection
+              title="แก้ไขค่าจัดส่ง"
+              description="ตั้งเป็น 0 หากต้องการส่งฟรี — มีผลกับทุกคำสั่งซื้อใหม่"
+            >
+              <div>
+                <label htmlFor="shipping-fee" className="mb-1.5 block text-sm font-semibold text-body-strong">
+                  ค่าจัดส่ง (บาท) ต่อคำสั่งซื้อ
+                </label>
+                <input
+                  id="shipping-fee"
+                  type="number"
+                  min="0"
+                  step="1"
+                  inputMode="decimal"
+                  value={feeInput}
+                  onChange={(e) => setFeeInput(e.target.value)}
+                  className="input"
+                  disabled={loading || saving}
+                />
+              </div>
+            </AdminFormSection>
+
+            <div className="admin-form-footer">
+              <button type="submit" disabled={loading || saving} className="btn-admin-primary min-h-[44px]">
+                {saving ? 'กำลังบันทึก...' : 'บันทึกค่าจัดส่ง'}
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </AdminPageShell>
   );
 }

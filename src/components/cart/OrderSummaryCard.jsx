@@ -1,4 +1,5 @@
 import { fmtTHB } from '../../lib/money.js';
+import ShopButton from '../ui/ShopButton.jsx';
 
 export default function OrderSummaryCard({
   subtotal,
@@ -63,21 +64,16 @@ export default function OrderSummaryCard({
       </div>
 
       {submitLabel && (
-        <button
+        <ShopButton
           type={submitType}
-          disabled={submitting}
+          variant="primary"
+          className="w-full opacity-100 disabled:pointer-events-none disabled:opacity-80"
+          loading={submitting}
+          loadingLabel="กำลังดำเนินการ..."
           onClick={submitType === 'button' ? onSubmit : undefined}
-          className="btn-primary w-full opacity-100 disabled:pointer-events-none disabled:opacity-80"
         >
-          {submitting ? (
-            <>
-              <span className="spinner" aria-hidden="true" />
-              กำลังดำเนินการ...
-            </>
-          ) : (
-            submitLabel
-          )}
-        </button>
+          {submitLabel}
+        </ShopButton>
       )}
 
       {extraAction}

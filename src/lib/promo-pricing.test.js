@@ -4,6 +4,7 @@ import {
   calcDisplayUnitPrice,
   calcPromoTotals,
   filterActivePromos,
+  hasActivePromoType,
   isPromoActive,
   pickBestPromoPerType,
 } from './promo-pricing.js';
@@ -120,5 +121,60 @@ describe('filterActivePromos', () => {
   it('filters inactive promos', () => {
     const promos = [basePromo(), basePromo({ id: 'x', is_active: false })];
     expect(filterActivePromos(promos)).toHaveLength(1);
+  });
+});
+
+describe('hasActivePromoType', () => {
+  it('returns false for draft promos', () => {
+    const promos = [
+      basePromo({
+        promo_type: PROMO_TYPES.FREE_SHIPPING,
+        discount_mode: null,
+        discount_value: 0,
+        distribution: 'draft',
+      }),
+    ];
+    expect(hasActivePromoType(promos, PROMO_TYPES.FREE_SHIPPING)).toBe(false);
+  });
+
+  it('returns true for active broadcast free shipping', () => {
+    const promos = [
+      basePromo({
+        promo_type: PROMO_TYPES.FREE_SHIPPING,
+        discount_mode: null,
+        discount_value: 0,
+      }),
+    ];
+    expect(hasActivePromoType(promos, PROMO_TYPES.FREE_SHIPPING)).toBe(true);
+  });
+
+  it('returns true for product or special discount types', () => {
+    const product = [basePromo({ promo_type: PROMO_TYPES.PRODUCT_DISCOUNT })];
+    const special = [
+      basePromo({
+        id: 's1',
+        promo_type: PROMO_TYPES.SPECIAL_DISCOUNT,
+        discount_mode: 'amount',
+        discount_value: 50,
+      }),
+    ];
+    expect(
+      hasActivePromoType(product, PROMO_TYPES.PRODUCT_DISCOUNT, PROMO_TYPES.SPECIAL_DISCOUNT)
+    ).toBe(true);
+    expect(
+      hasActivePromoType(special, PROMO_TYPES.PRODUCT_DISCOUNT, PROMO_TYPES.SPECIAL_DISCOUNT)
+    ).toBe(true);
+  });
+
+  it('returns false for expired promos', () => {
+    const promos = [
+      basePromo({
+        promo_type: PROMO_TYPES.FREE_SHIPPING,
+        discount_mode: null,
+        discount_value: 0,
+        expires_at: '2020-01-01T00:00:00Z',
+      }),
+    ];
+    expect(hasActivePromoType(promos, PROMO_TYPES.FREE_SHIPPING)).toBe(false);
   });
 });

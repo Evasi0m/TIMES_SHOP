@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import AdminNav from '../../components/admin/AdminNav.jsx';
+import AdminFormSection from '../../components/admin/AdminFormSection.jsx';
+import AdminPageShell from '../../components/admin/AdminPageShell.jsx';
+import { Skeleton } from '../../components/Skeleton.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { shopApi } from '../../lib/shop-api.js';
 import { mapError } from '../../lib/error-map.js';
@@ -82,54 +84,68 @@ export default function AdminPromoEditorPage() {
   const isFreeShipping = form.promo_type === PROMO_TYPES.FREE_SHIPPING;
 
   if (loading) {
-    return <p className="text-muted">กำลังโหลด...</p>;
+    return (
+      <AdminPageShell
+        title={isNew ? 'สร้างโปรใหม่' : 'แก้ไขโปร'}
+        backTo="/admin/promos"
+        backLabel="← กลับคลังโปร"
+      >
+        <div className="admin-card admin-card--pad space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-2/3" />
+        </div>
+      </AdminPageShell>
+    );
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <Link to="/admin/promos" className="text-sm text-muted transition hover:text-primary">
-          ← กลับคลังโปร
-        </Link>
-        <h1 className="mt-2 font-display text-3xl text-ink lg:text-4xl">
-          {isNew ? 'สร้างโปรใหม่' : 'แก้ไขโปร'}
-        </h1>
-      </div>
+    <AdminPageShell
+      title={isNew ? 'สร้างโปรใหม่' : 'แก้ไขโปร'}
+      subtitle="บันทึกแบบร่างก่อน แล้วไปที่คลังโปรเพื่อกด «แจกโปร» ให้ลูกค้าได้รับสิทธิ์"
+      backTo="/admin/promos"
+      backLabel="← กลับคลังโปร"
+    >
+      <form onSubmit={handleSubmit} className="admin-card admin-card--pad mt-6">
+        <AdminFormSection
+          title="ข้อมูลพื้นฐาน"
+          description="ชื่อที่ลูกค้าเห็นและประเภทโปร"
+        >
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-body-strong">
+              ชื่อที่ลูกค้าเห็น *
+            </label>
+            <input
+              value={form.display_name}
+              onChange={(e) => update('display_name', e.target.value)}
+              className="input"
+              placeholder="เช่น ลด 10% สินค้า"
+              required
+            />
+          </div>
 
-      <AdminNav />
-
-      <form onSubmit={handleSubmit} className="card-canvas space-y-4 p-4 lg:p-6">
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-body-strong">
-            ชื่อที่ลูกค้าเห็น *
-          </label>
-          <input
-            value={form.display_name}
-            onChange={(e) => update('display_name', e.target.value)}
-            className="input"
-            placeholder="เช่น ลด 10% สินค้า"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-body-strong">ประเภทโปร *</label>
-          <select
-            value={form.promo_type}
-            onChange={(e) => update('promo_type', e.target.value)}
-            className="input"
-          >
-            {PROMO_TYPE_LIST.map((type) => (
-              <option key={type} value={type}>
-                {PROMO_TYPE_LABELS[type]}
-              </option>
-            ))}
-          </select>
-          <p className="mt-1 text-xs text-muted">{PROMO_TYPE_DESCRIPTIONS[form.promo_type]}</p>
-        </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-body-strong">ประเภทโปร *</label>
+            <select
+              value={form.promo_type}
+              onChange={(e) => update('promo_type', e.target.value)}
+              className="input"
+            >
+              {PROMO_TYPE_LIST.map((type) => (
+                <option key={type} value={type}>
+                  {PROMO_TYPE_LABELS[type]}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-muted">{PROMO_TYPE_DESCRIPTIONS[form.promo_type]}</p>
+          </div>
+        </AdminFormSection>
 
         {!isFreeShipping && (
-          <>
+          <AdminFormSection
+            title="เงื่อนไขส่วนลด"
+            description="รูปแบบและมูลค่าส่วนลด รวมถึงยอดสั่งซื้อขั้นต่ำ"
+          >
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-body-strong">
@@ -168,64 +184,66 @@ export default function AdminPromoEditorPage() {
                 className="input"
               />
             </div>
-          </>
+          </AdminFormSection>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-body-strong">เริ่มใช้</label>
-            <input
-              type="datetime-local"
-              value={form.starts_at}
-              onChange={(e) => update('starts_at', e.target.value)}
-              className="input"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-body-strong">หมดอายุ</label>
-            <input
-              type="datetime-local"
-              value={form.expires_at}
-              onChange={(e) => update('expires_at', e.target.value)}
-              className="input"
-              disabled={form.no_expiry}
-            />
-            <label className="mt-2 flex items-center gap-2 text-sm text-body">
+        <AdminFormSection
+          title="ระยะเวลาและข้อจำกัด"
+          description="กำหนดช่วงใช้งานและจำนวนครั้งที่ใช้ได้"
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-body-strong">เริ่มใช้</label>
               <input
-                type="checkbox"
-                checked={form.no_expiry}
-                onChange={(e) => update('no_expiry', e.target.checked)}
+                type="datetime-local"
+                value={form.starts_at}
+                onChange={(e) => update('starts_at', e.target.value)}
+                className="input"
               />
-              ไม่มีวันหมดอายุ
-            </label>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-body-strong">หมดอายุ</label>
+              <input
+                type="datetime-local"
+                value={form.expires_at}
+                onChange={(e) => update('expires_at', e.target.value)}
+                className="input"
+                disabled={form.no_expiry}
+              />
+              <label className="mt-2 flex min-h-[44px] items-center gap-2 text-sm text-body">
+                <input
+                  type="checkbox"
+                  checked={form.no_expiry}
+                  onChange={(e) => update('no_expiry', e.target.checked)}
+                />
+                ไม่มีวันหมดอายุ
+              </label>
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-body-strong">
-            จำกัดจำนวนครั้ง (ว่าง = ไม่จำกัด)
-          </label>
-          <input
-            type="number"
-            min="1"
-            value={form.max_uses}
-            onChange={(e) => update('max_uses', e.target.value)}
-            className="input"
-          />
-        </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-body-strong">
+              จำกัดจำนวนครั้ง (ว่าง = ไม่จำกัด)
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={form.max_uses}
+              onChange={(e) => update('max_uses', e.target.value)}
+              className="input"
+            />
+          </div>
+        </AdminFormSection>
 
-        <div className="flex gap-2 pt-2">
-          <Link to="/admin/promos" className="btn-ghost flex-1">
+        <div className="admin-form-footer">
+          <Link to="/admin/promos" className="btn-admin-secondary min-h-[44px] flex-1">
             ยกเลิก
           </Link>
-          <button type="submit" disabled={saving} className="btn-primary flex-1">
+          <button type="submit" disabled={saving} className="btn-admin-primary min-h-[44px] flex-1">
             {saving ? 'กำลังบันทึก...' : 'บันทึกแบบร่าง'}
           </button>
         </div>
-        <p className="text-xs text-muted">
-          หลังบันทึก ไปที่คลังโปรแล้วกด &quot;แจกโปร&quot; เพื่อให้ลูกค้าได้รับสิทธิ์
-        </p>
       </form>
-    </div>
+    </AdminPageShell>
   );
 }

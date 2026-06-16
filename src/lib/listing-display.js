@@ -25,8 +25,14 @@ export function getListingCardTitle(item) {
 
 export function getListingCardSubtitle(item) {
   const count = Number(item?.sku_count) || 0;
-  if (count > 1) return `${count.toLocaleString('th-TH')} ตัวเลือก`;
+  if (count > 1) return '';
   return item?.sku_name || '';
+}
+
+export function formatListingSkuOptions(count) {
+  const n = Number(count) || 0;
+  if (n <= 1) return null;
+  return `${n.toLocaleString('th-TH')} ตัวเลือก`;
 }
 
 export function formatListingPrice(item) {
@@ -55,6 +61,24 @@ export function computeListingPriceRange(skus = []) {
     .filter((p) => p > 0);
   if (!prices.length) return { min: 0, max: 0 };
   return { min: Math.min(...prices), max: Math.max(...prices) };
+}
+
+/** Lowest unit_price among in-stock SKUs; falls back to all SKUs if none in stock. */
+export function computeInStockPriceMin(skus = []) {
+  const inStockPrices = skus
+    .filter((s) => s.in_stock ?? Number(s.stock_available) > 0)
+    .map((s) => Number(s?.unit_price) || 0)
+    .filter((p) => p > 0);
+  if (inStockPrices.length) return Math.min(...inStockPrices);
+  const { min } = computeListingPriceRange(skus);
+  return min;
+}
+
+/** Single display price for catalog listing cards. */
+export function getListingCardDisplayPrice(item) {
+  const inStockMin = Number(item?.price_min_in_stock);
+  if (Number.isFinite(inStockMin) && inStockMin > 0) return inStockMin;
+  return Number(item?.price_min ?? item?.unit_price) || 0;
 }
 
 export function computeListingUnitsSold(skus = []) {

@@ -14,6 +14,7 @@ import AccountPage from './pages/account/AccountPage.jsx';
 import OrdersPage from './pages/account/OrdersPage.jsx';
 import AddressesPage from './pages/account/AddressesPage.jsx';
 import AdminShippingPage from './pages/admin/AdminShippingPage.jsx';
+import AdminSlipsPage from './pages/admin/AdminSlipsPage.jsx';
 import AdminPromosPage from './pages/admin/AdminPromosPage.jsx';
 import AdminPromoEditorPage from './pages/admin/AdminPromoEditorPage.jsx';
 import PromosPage from './pages/account/PromosPage.jsx';
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="admin/promos/new" element={<AdminPromoEditorPage />} />
           <Route path="admin/promos/:id/edit" element={<AdminPromoEditorPage />} />
           <Route path="admin/shipping" element={<AdminShippingPage />} />
+          <Route path="admin/slips" element={<AdminSlipsPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

@@ -35,8 +35,11 @@ export function getStatusLabel(status) {
 }
 
 export function statusBadgeClass(status) {
-  if (status === 'active') return 'badge-success';
-  if (status === 'draft') return 'badge-pill';
-  if (status === 'scheduled') return 'badge-pill';
-  return 'badge-pill bg-surface-soft text-muted';
+  if (status === 'active') return 'badge-pill badge-pill--success';
+  if (status === 'scheduled') return 'badge-pill badge-pill--warning';
+  if (status === 'inactive' || status === 'expired' || status === 'exhausted') {
+    return 'badge-pill badge-pill--muted';
+  }
+  if (status === 'draft') return 'badge-pill badge-pill--muted';
+  return 'badge-pill';
 }

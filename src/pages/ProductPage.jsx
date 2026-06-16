@@ -18,8 +18,6 @@ import ProductTabNav from '../components/product/ProductTabNav.jsx';
 import RelatedProductsRow from '../components/product/RelatedProductsRow.jsx';
 import VariantBuySheet from '../components/product/VariantBuySheet.jsx';
 import PromoPriceDisplay from '../components/PromoPriceDisplay.jsx';
-import PromoLabels from '../components/PromoLabels.jsx';
-import ShippingBadge from '../components/ShippingBadge.jsx';
 import BannerAlert from '../components/ui/BannerAlert.jsx';
 import { Skeleton } from '../components/Skeleton.jsx';
 import { ChevronLeftIcon } from '../components/icons.jsx';
@@ -227,10 +225,6 @@ export default function ProductPage() {
             {shouldShowUnitsSold(listingUnitsSold) && skus.length > 1 && ' · '}
             {skus.length > 1 && `${skus.length.toLocaleString('th-TH')} ตัวเลือก`}
           </p>
-          <div className="flex flex-wrap gap-2 pt-1">
-            <ShippingBadge />
-            <PromoLabels />
-          </div>
           <p className="text-sm text-body">
             <span className="font-semibold text-primary">
               {hasFreeShippingPromo ? 'ส่งฟรี' : shippingLabel}
@@ -276,7 +270,9 @@ export default function ProductPage() {
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-sm text-muted">การจัดส่ง</span>
-              <ShippingBadge />
+              <span className="text-sm font-medium text-ink">
+                {hasFreeShippingPromo ? 'ส่งฟรี' : shippingLabel}
+              </span>
             </div>
           </div>
         </section>

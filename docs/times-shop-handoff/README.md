@@ -14,6 +14,7 @@
 | [SHOP_REQUIREMENTS.md](./SHOP_REQUIREMENTS.md) | โจทย์ธุรกิจ / ฟีเจอร์ครบ | AI สร้าง TIMES_SHOP |
 | [BACKEND_CONTRACT.md](./BACKEND_CONTRACT.md) | API, schema, RPC, Edge Functions ที่ Shop เรียกได้ | AI ทั้งสอง repo |
 | [BACKEND_TODO.md](./BACKEND_TODO.md) | งานที่ต้องทำใน TIMES_POS ก่อน/คู่กัน | AI / คุณ (ฝั่ง POS) |
+| [HYBRID_B_PLAN.md](./HYBRID_B_PLAN.md) | แผนแยก Supabase Shop/POS (Hybrid B) | AI / คุณ |
 | [SECURITY.md](./SECURITY.md) | กฎความปลอดภัย — ห้ามทำอะไร | AI สร้าง TIMES_SHOP |
 | [UI_GUIDE.md](./UI_GUIDE.md) | Design tokens, UX, responsive | AI สร้าง TIMES_SHOP |
 | [PROMPT_INITIAL.md](./PROMPT_INITIAL.md) | Prompt แรก copy-paste ให้ AI repo ใหม่ | **คุณ** |

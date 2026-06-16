@@ -147,12 +147,15 @@ export function calcDisplayUnitPrice(unitPrice, promos) {
   return discountedSubtotal;
 }
 
+export function hasActivePromoType(promos, ...types) {
+  return filterActivePromos(promos).some((p) => types.includes(p.promo_type));
+}
+
 export function hasProductLevelDiscount(promos) {
-  const active = filterActivePromos(promos);
-  return active.some(
-    (p) =>
-      p.promo_type === PROMO_TYPES.PRODUCT_DISCOUNT ||
-      p.promo_type === PROMO_TYPES.SPECIAL_DISCOUNT
+  return hasActivePromoType(
+    promos,
+    PROMO_TYPES.PRODUCT_DISCOUNT,
+    PROMO_TYPES.SPECIAL_DISCOUNT
   );
 }
 

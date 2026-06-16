@@ -1,15 +1,24 @@
 // Single data-access layer for the storefront. Toggle between local mocks and
 // the real shop-* Edge Functions via VITE_USE_MOCK_API. The UI only ever imports
 // from here, so swapping to real backend requires no page changes.
+//
+// Hybrid B routing:
+// - Catalog (TikTok cache): POS project via posSupabase
+// - Auth, promos, addresses, settings: Shop project via supabase
 
-import { USE_MOCK_API } from './config.js';
-import { mergeClientShippingIntoResponse } from './shipping-store.js';
+import { USE_MOCK_API, hasPosSupabaseConfig } from './config.js';
 import { supabase } from './supabase.js';
+import { posSupabase } from './pos-supabase.js';
+import {
+  catalogCacheKey,
+  getCachedCatalog,
+  setCachedCatalog,
+} from './catalog-cache.js';
 import { mockApi } from '../mocks/shop-api.mock.js';
 
-async function invoke(fn, body) {
+async function invokeClient(client, fn, body) {
   try {
-    const { data, error } = await supabase.functions.invoke(fn, { body });
+    const { data, error } = await client.functions.invoke(fn, { body });
     if (error) {
       return { ok: false, error: 'network_error', message: error.message };
     }
@@ -26,6 +35,32 @@ async function invoke(fn, body) {
   }
 }
 
+/** Shop project Edge Functions (auth JWT when required). */
+function invokeShop(fn, body) {
+  return invokeClient(supabase, fn, body);
+}
+
+/** POS project Edge Functions (public catalog; no Shop JWT). */
+function invokePos(fn, body) {
+  if (!hasPosSupabaseConfig) {
+    return Promise.resolve({
+      ok: false,
+      error: 'pos_not_configured',
+      message: 'ยังไม่ได้ตั้งค่า VITE_POS_SUPABASE_URL / VITE_POS_SUPABASE_ANON_KEY',
+    });
+  }
+  return invokeClient(posSupabase, fn, body);
+}
+
+async function invokePosCached(fn, body) {
+  const key = catalogCacheKey(fn, body);
+  const hit = getCachedCatalog(key);
+  if (hit) return hit;
+  const res = await invokePos(fn, body);
+  if (res?.ok) setCachedCatalog(key, res);
+  return res;
+}
+
 async function invokeMultipart(fn, formData) {
   const { data, error } = await supabase.functions.invoke(fn, { body: formData });
   if (error) return { ok: false, error: 'network_error', message: error.message };
@@ -34,7 +69,9 @@ async function invokeMultipart(fn, formData) {
 
 export const shopApi = {
   getCatalog(params) {
-    const run = USE_MOCK_API ? mockApi.getCatalog(params) : invoke('shop-get-catalog', params);
+    const run = USE_MOCK_API
+      ? mockApi.getCatalog(params)
+      : invokePosCached('shop-get-catalog', params);
     return run.then((res) => res).catch((err) => ({
       ok: false,
       error: 'network_error',
@@ -42,76 +79,87 @@ export const shopApi = {
     }));
   },
   getProduct(params) {
-    return USE_MOCK_API ? mockApi.getProduct(params) : invoke('shop-get-product', params);
+    return USE_MOCK_API ? mockApi.getProduct(params) : invokePosCached('shop-get-product', params);
   },
   validateCart(params) {
-    return USE_MOCK_API ? mockApi.validateCart(params) : invoke('shop-validate-cart', params);
+    return USE_MOCK_API ? mockApi.validateCart(params) : invokePos('shop-validate-cart', params);
   },
   placeOrder(payload) {
-    // TODO(TIMES_POS): guest checkout — optional JWT on shop-place-order
-    return USE_MOCK_API ? mockApi.placeOrder(payload) : invoke('shop-place-order', payload);
+    return USE_MOCK_API ? mockApi.placeOrder(payload) : invokeShop('shop-place-order', payload);
   },
   getMyOrders(params) {
-    return USE_MOCK_API ? mockApi.getMyOrders(params) : invoke('shop-get-my-orders', params);
+    return USE_MOCK_API ? mockApi.getMyOrders(params) : invokeShop('shop-get-my-orders', params);
   },
   getOrder(params) {
-    // Reuse my-orders on the real backend until a dedicated endpoint exists.
-    return USE_MOCK_API ? mockApi.getOrder(params) : invoke('shop-get-my-orders', params);
+    return USE_MOCK_API
+      ? mockApi.getOrder(params)
+      : invokeShop('shop-get-my-orders', { order_id: params.order_id, page: 1, page_size: 1 });
   },
   async getPaymentInfo() {
     if (USE_MOCK_API) return mockApi.getPaymentInfo();
-    const res = await invoke('shop-get-payment-info', {});
+    const res = await invokeShop('shop-get-payment-info', {});
     if (!res.ok) return mockApi.getPaymentInfo();
-    return mergeClientShippingIntoResponse(res);
+    return res;
   },
   uploadSlip(file, options = {}) {
-    // TODO(TIMES_POS): guest checkout — optional JWT on shop-upload-slip / shop-verify-slip
     if (USE_MOCK_API) return mockApi.uploadSlip(file, options);
     const fd = new FormData();
     fd.append('file', file);
     return invokeMultipart('shop-upload-slip', fd);
   },
   verifySlip(params) {
-    return USE_MOCK_API ? mockApi.verifySlip(params) : invoke('shop-verify-slip', params);
+    return USE_MOCK_API ? mockApi.verifySlip(params) : invokeShop('shop-verify-slip', params);
   },
   listAddresses() {
-    return USE_MOCK_API ? mockApi.listAddresses() : invoke('shop-list-addresses', {});
+    return USE_MOCK_API ? mockApi.listAddresses() : invokeShop('shop-list-addresses', {});
   },
   upsertAddress(payload) {
-    return USE_MOCK_API ? mockApi.upsertAddress(payload) : invoke('shop-upsert-address', payload);
+    return USE_MOCK_API ? mockApi.upsertAddress(payload) : invokeShop('shop-upsert-address', payload);
   },
   deleteAddress(params) {
-    return USE_MOCK_API ? mockApi.deleteAddress(params) : invoke('shop-delete-address', params);
+    return USE_MOCK_API ? mockApi.deleteAddress(params) : invokeShop('shop-delete-address', params);
   },
-  // TODO(TIMES_POS): switch to invoke when shop-admin-settings-* deployed
   adminGetShopSettings() {
-    return mockApi.adminGetShopSettings();
+    return USE_MOCK_API
+      ? mockApi.adminGetShopSettings()
+      : invokeShop('shop-admin-get-shop-settings', {});
   },
   adminUpdateShopSettings(payload) {
-    return mockApi.adminUpdateShopSettings(payload);
+    return USE_MOCK_API
+      ? mockApi.adminUpdateShopSettings(payload)
+      : invokeShop('shop-admin-update-shop-settings', payload);
   },
-  // TODO(TIMES_POS): deploy shop-get-active-promos, shop-admin-promo-*
   getActivePromos(params) {
-    return USE_MOCK_API ? mockApi.getActivePromos(params) : invoke('shop-get-active-promos', params);
+    return USE_MOCK_API
+      ? mockApi.getActivePromos(params)
+      : invokeShop('shop-get-active-promos', params ?? {});
   },
   getMyPromos(params) {
-    return USE_MOCK_API ? mockApi.getMyPromos(params) : invoke('shop-get-my-promos', params);
+    return USE_MOCK_API
+      ? mockApi.getMyPromos(params)
+      : invokeShop('shop-get-my-promos', params ?? {});
   },
   adminPromoList() {
-    return USE_MOCK_API ? mockApi.adminPromoList() : invoke('shop-admin-promo-list', {});
+    return USE_MOCK_API ? mockApi.adminPromoList() : invokeShop('shop-admin-promo-list', {});
   },
   adminPromoUpsert(payload) {
-    return USE_MOCK_API ? mockApi.adminPromoUpsert(payload) : invoke('shop-admin-promo-upsert', payload);
+    return USE_MOCK_API ? mockApi.adminPromoUpsert(payload) : invokeShop('shop-admin-promo-upsert', payload);
   },
   adminPromoDistribute(payload) {
     return USE_MOCK_API
       ? mockApi.adminPromoDistribute(payload)
-      : invoke('shop-admin-promo-distribute', payload);
+      : invokeShop('shop-admin-promo-distribute', payload);
   },
   adminPromoRevoke(payload) {
-    return USE_MOCK_API ? mockApi.adminPromoRevoke(payload) : invoke('shop-admin-promo-revoke', payload);
+    return USE_MOCK_API ? mockApi.adminPromoRevoke(payload) : invokeShop('shop-admin-promo-revoke', payload);
   },
   adminListCustomers() {
-    return USE_MOCK_API ? mockApi.adminListCustomers() : invoke('shop-admin-customer-list', {});
+    return USE_MOCK_API ? mockApi.adminListCustomers() : invokeShop('shop-admin-list-customers', {});
+  },
+  adminSlipsQueue() {
+    return USE_MOCK_API ? mockApi.adminSlipsQueue() : invokeShop('shop-admin-slips-queue', {});
+  },
+  adminSlipReview(payload) {
+    return USE_MOCK_API ? mockApi.adminSlipReview(payload) : invokeShop('shop-admin-slip-review', payload);
   },
 };

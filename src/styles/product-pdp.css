@@ -24,17 +24,10 @@
   scroll-snap-align: start;
 }
 
-.pdp-gallery-badge {
-  position: absolute;
-  left: 1rem;
-  bottom: 1rem;
-  z-index: 2;
-}
-
 .pdp-gallery-counter {
   position: absolute;
   right: 1rem;
-  bottom: 1rem;
+  top: 1rem;
   z-index: 2;
   padding: 0.25rem 0.625rem;
   border-radius: 999px;

@@ -4,12 +4,9 @@ import { shopApi } from '../lib/shop-api.js';
 import ProductCard from '../components/ProductCard.jsx';
 import { ProductGridSkeleton } from '../components/Skeleton.jsx';
 import SectionHeader from '../components/layout/SectionHeader.jsx';
-import BadgePill from '../components/ui/BadgePill.jsx';
 import BannerAlert from '../components/ui/BannerAlert.jsx';
 import { SHOP_NAME } from '../lib/config.js';
 import { useShipping } from '../context/ShippingContext.jsx';
-import ShippingBadge from '../components/ShippingBadge.jsx';
-import PromoLabels from '../components/PromoLabels.jsx';
 
 export default function HomePage() {
   const { shippingPromoText } = useShipping();
@@ -55,8 +52,6 @@ export default function HomePage() {
           <Link to="/catalog" className="btn-primary">
             เลือกซื้อสินค้า
           </Link>
-          <ShippingBadge />
-          <PromoLabels />
         </div>
       </section>
 

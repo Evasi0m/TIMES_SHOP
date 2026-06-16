@@ -7,8 +7,8 @@ alwaysApply: true
 
 ## Project context
 - TIMES_SHOP = customer-facing web store (separate repo from TIMES_POS)
-- Backend = same Supabase project as TIMES_POS — never create a new database
-- Product catalog syncs from TikTok Shop API via POS Edge Functions (not from browser)
+- **Hybrid B:** Shop Supabase (`VITE_SUPABASE_*`) = auth, promos, addresses, admin. POS Supabase (`VITE_POS_*`) = TikTok catalog cache only.
+- Product catalog syncs from TikTok Shop API via POS `shop-get-catalog` (not from browser direct TikTok)
 
 ## Required reading before any feature work
 1. `docs/times-shop-handoff/SHOP_REQUIREMENTS.md`
@@ -26,14 +26,15 @@ alwaysApply: true
 - Re-validate cart server-side before placing orders — never trust client prices
 
 ## Auth
-- Customers get `app_role: customer` in app_metadata (set by backend trigger)
-- Staff roles (admin/super_admin) may access `/admin` routes only with role check
-- Use anon key + customer JWT only
+- Shop admin allowlist: `true.wifi8888@gmail.com` → `app_role: admin` (trigger on Shop project)
+- Other signups → `app_role: customer` in app_metadata (set by backend trigger)
+- Staff POS roles stay on POS project — separate from Shop admin
+- Use Shop anon key + JWT in browser; NEVER service_role in frontend
 
-## API
-- If backend not deployed yet: mock responses matching BACKEND_CONTRACT exactly
-- Toggle via `VITE_USE_MOCK_API=true`
-- Do not invent API shapes outside the contract
+## API routing (Hybrid B)
+- Catalog / validate cart → POS project (`posSupabase` / `VITE_POS_*`)
+- Auth, promos, settings, addresses, place order → Shop project (`supabase` / `VITE_SUPABASE_*`)
+- `shop-place-order` on Shop bridges to POS with server secret (not in browser)
 
 ## UI
 - Thai language primary
@@ -42,8 +43,9 @@ alwaysApply: true
 - Copy money formatting pattern from POS `money.js` — do not duplicate POS UI shell
 
 ## Backend changes
-- Supabase migrations and new Edge Functions belong in TIMES_POS repo — not here
-- If an API is missing, add a TODO and use mock — do not create migrations in TIMES_SHOP
+- Shop DB migrations + Shop Edge Functions: `supabase/` in TIMES_SHOP
+- POS catalog/order functions: deploy to POS project (`supabase-pos/` reference or TIMES_POS repo)
+- Toggle mock via `VITE_USE_MOCK_API=true` for offline dev only
 
 ## Order flow
 - Order flow: web orders use TikTok stock for catalog; POS still cuts POS stock on confirm

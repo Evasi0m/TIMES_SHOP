@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import ShopButton from './ui/ShopButton.jsx';
 
 export default function EmptyState({ title, description, actionLabel, actionTo, onAction, icon }) {
   return (
@@ -16,9 +17,9 @@ export default function EmptyState({ title, description, actionLabel, actionTo, 
       <h2 className="font-display text-xl text-ink">{title}</h2>
       {description && <p className="max-w-sm text-base text-muted">{description}</p>}
       {actionLabel && onAction && (
-        <button type="button" className="btn-primary mt-2" onClick={onAction}>
+        <ShopButton type="button" variant="primary" className="mt-2" onClick={onAction}>
           {actionLabel}
-        </button>
+        </ShopButton>
       )}
       {actionLabel && actionTo && !onAction && (
         <Link to={actionTo} className="btn-primary mt-2">

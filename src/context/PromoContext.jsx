@@ -1,12 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext.jsx';
 import { shopApi } from '../lib/shop-api.js';
-import {
-  calcDisplayUnitPrice,
-  calcPromoTotals,
-  getActivePromoLabels,
-  hasProductLevelDiscount,
-} from '../lib/promo-pricing.js';
+import { calcDisplayUnitPrice, calcPromoTotals, hasActivePromoType } from '../lib/promo-pricing.js';
+import { PROMO_TYPES } from '../lib/promo-types.js';
 
 const PromoContext = createContext(null);
 
@@ -36,9 +32,12 @@ export function PromoProvider({ children }) {
       promos,
       loading,
       refresh,
-      promoLabels: getActivePromoLabels(promos),
-      hasProductDiscount: hasProductLevelDiscount(promos),
-      hasFreeShippingPromo: promos.some((p) => p.promo_type === 'free_shipping'),
+      hasProductDiscount: hasActivePromoType(
+        promos,
+        PROMO_TYPES.PRODUCT_DISCOUNT,
+        PROMO_TYPES.SPECIAL_DISCOUNT
+      ),
+      hasFreeShippingPromo: hasActivePromoType(promos, PROMO_TYPES.FREE_SHIPPING),
       getDisplayPrice,
       getOrderTotals,
     };

@@ -1,6 +1,7 @@
 import { useShipping } from '../context/ShippingContext.jsx';
 import { usePromo } from '../context/PromoContext.jsx';
 import { fmtTHB } from '../lib/money.js';
+import BadgePill from './ui/BadgePill.jsx';
 
 export default function ShippingBadge({ className = '' }) {
   const { shippingFee, shippingLabel } = useShipping();
@@ -8,7 +9,11 @@ export default function ShippingBadge({ className = '' }) {
 
   const effectiveFree = hasFreeShippingPromo || shippingFee <= 0;
   const label = effectiveFree ? 'ส่งฟรี' : shippingLabel || fmtTHB(shippingFee);
-  const badgeClass = effectiveFree ? 'badge-promo w-fit' : 'badge-pill w-fit';
+  const variant = effectiveFree ? 'freeShipping' : 'default';
 
-  return <span className={`${badgeClass} ${className}`.trim()}>{label}</span>;
+  return (
+    <BadgePill variant={variant} className={`w-fit ${className}`.trim()}>
+      {label}
+    </BadgePill>
+  );
 }

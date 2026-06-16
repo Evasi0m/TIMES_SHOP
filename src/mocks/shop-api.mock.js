@@ -19,9 +19,12 @@ import { COLOR_MAP, MATERIAL_MAP } from '../lib/casio/maps.js';
 import { SERIES_RULES } from '../lib/casio/series-rules.js';
 import { SERIES_SUBS } from '../lib/casio/sub-type-rules.js';
 import { getCasioModelBase } from '../lib/casio/parse-model.js';
+import { computeInStockPriceMin, computeListingUnitsSold } from '../lib/listing-display.js';
 
 const IMG = (seed) =>
   `https://picsum.photos/seed/${seed}/600/600`;
+
+const daysAgoIso = (days) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
 function enrichProduct(p) {
   const code = String(p.seller_sku || p.sku_name || '').trim();
@@ -145,6 +148,7 @@ const PRODUCTS = [
     unit_price: 9900,
     stock_available: 4,
     units_sold: 128,
+    created_at: daysAgoIso(3),
   },
   {
     tiktok_sku_id: '1734123456789012302',
@@ -158,6 +162,7 @@ const PRODUCTS = [
     stock_available: 12,
     units_sold: 42,
     sales_attributes: [{ name: 'สี', value_name: 'ดำ' }],
+    created_at: daysAgoIso(7),
   },
   {
     tiktok_sku_id: '1734123456789012302b',
@@ -171,6 +176,7 @@ const PRODUCTS = [
     stock_available: 5,
     units_sold: 18,
     sales_attributes: [{ name: 'สี', value_name: 'ขาว' }],
+    created_at: daysAgoIso(12),
   },
   {
     tiktok_sku_id: '1734123456789012302c',
@@ -184,6 +190,7 @@ const PRODUCTS = [
     stock_available: 0,
     units_sold: 9,
     sales_attributes: [{ name: 'สี', value_name: 'แดง' }],
+    created_at: daysAgoIso(20),
   },
   {
     tiktok_sku_id: '1734123456789012303',
@@ -195,6 +202,7 @@ const PRODUCTS = [
     unit_price: 6500,
     stock_available: 0,
     units_sold: 0,
+    created_at: daysAgoIso(45),
   },
   {
     tiktok_sku_id: '1734123456789012304',
@@ -206,6 +214,7 @@ const PRODUCTS = [
     unit_price: 11900,
     stock_available: 3,
     units_sold: 7,
+    created_at: daysAgoIso(2),
   },
   {
     tiktok_sku_id: '1734123456789012305',
@@ -217,6 +226,7 @@ const PRODUCTS = [
     unit_price: 1290,
     stock_available: 25,
     units_sold: 0,
+    created_at: daysAgoIso(90),
   },
   {
     tiktok_sku_id: '1734123456789012306',
@@ -228,6 +238,7 @@ const PRODUCTS = [
     unit_price: 16900,
     stock_available: 2,
     units_sold: 15,
+    created_at: daysAgoIso(14),
   },
   {
     tiktok_sku_id: '1734123456789012307',
@@ -238,6 +249,7 @@ const PRODUCTS = [
     image_url: IMG('timex-weekender'),
     unit_price: 2490,
     stock_available: 8,
+    created_at: daysAgoIso(55),
   },
   {
     tiktok_sku_id: '1734123456789012308',
@@ -249,6 +261,7 @@ const PRODUCTS = [
     unit_price: 24900,
     stock_available: 1,
     units_sold: 3,
+    created_at: daysAgoIso(1),
   },
 ];
 
@@ -294,14 +307,27 @@ function pickListingCoverImage(rows) {
   return null;
 }
 
+function pickListingCreatedAt(rows) {
+  let newest = null;
+  for (const row of rows) {
+    if (!row.created_at) continue;
+    const t = new Date(row.created_at).getTime();
+    if (!Number.isFinite(t)) continue;
+    if (newest == null || t > newest) newest = t;
+  }
+  return newest != null ? new Date(newest).toISOString() : undefined;
+}
+
 function toListingCatalogItem(rows) {
   if (!rows.length) return null;
   const skus = rows.map(toCatalogItem);
   const prices = skus.map((s) => s.unit_price).filter((p) => p > 0);
   const priceMin = prices.length ? Math.min(...prices) : 0;
   const priceMax = prices.length ? Math.max(...prices) : 0;
+  const priceMinInStock = computeInStockPriceMin(skus);
   const defaultSku = pickDefaultSkuItem(rows);
   const coverImage = pickListingCoverImage(rows);
+  const created_at = pickListingCreatedAt(rows);
   return {
     tiktok_product_id: rows[0].tiktok_product_id || null,
     product_name: rows[0].product_name,
@@ -310,11 +336,14 @@ function toListingCatalogItem(rows) {
     sku_count: skus.length,
     price_min: priceMin,
     price_max: priceMax,
-    unit_price: priceMin,
+    price_min_in_stock: priceMinInStock,
+    unit_price: priceMinInStock || priceMin,
     default_sku_id: defaultSku?.tiktok_sku_id || skus[0]?.tiktok_sku_id,
     tiktok_sku_id: defaultSku?.tiktok_sku_id || skus[0]?.tiktok_sku_id,
     in_stock: skus.some((s) => s.in_stock),
     stock_available: skus.reduce((sum, s) => sum + (s.stock_available || 0), 0),
+    units_sold: computeListingUnitsSold(skus),
+    ...(created_at ? { created_at } : {}),
   };
 }
 
@@ -777,5 +806,44 @@ export const mockApi = {
   async adminListCustomers() {
     await delay();
     return adminListCustomers();
+  },
+
+  async adminSlipsQueue() {
+    await delay();
+    const all = readOrders().filter(
+      (o) => o.payment_method === 'transfer' && o.payment_slip_status === 'pending_review',
+    );
+    return {
+      ok: true,
+      total: all.length,
+      orders: all.map((o) => ({
+        order_id: o.order_id,
+        web_order_number: o.web_order_number,
+        status: o.status,
+        sale_date: o.sale_date,
+        grand_total: o.grand_total,
+        payment_method: o.payment_method,
+        payment_slip_path: o.payment_slip_path || null,
+        payment_slip_status: o.payment_slip_status || 'pending_review',
+        recipient_name: o.shipping?.recipient_name,
+        phone: o.shipping?.phone,
+        slip_signed_url: null,
+      })),
+    };
+  },
+
+  async adminSlipReview({ order_id, action, note }) {
+    await delay();
+    const all = readOrders();
+    const idx = all.findIndex((o) => String(o.order_id) === String(order_id));
+    if (idx < 0) return { ok: false, error: 'not_found', message: 'ไม่พบออเดอร์' };
+    const next = action === 'approve' ? 'approved' : 'rejected';
+    all[idx] = {
+      ...all[idx],
+      payment_slip_status: next,
+      payment_slip_note: note || null,
+    };
+    writeOrders(all);
+    return { ok: true, message: action === 'approve' ? 'อนุมัติสลิปแล้ว' : 'ปฏิเสธสลิปแล้ว' };
   },
 };

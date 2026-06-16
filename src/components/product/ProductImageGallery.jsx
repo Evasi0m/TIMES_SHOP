@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import ShippingBadge from '../ShippingBadge.jsx';
+import ProductImagePromos from '../ProductImagePromos.jsx';
 
 function WatchPlaceholder({ className = '' }) {
   return (
@@ -99,7 +99,7 @@ export default function ProductImageGallery({ images = [], alt = 'สินค�
         <div className="bg-surface-soft">
           <WatchPlaceholder />
         </div>
-        <ShippingBadge className="pdp-gallery-badge" />
+        <ProductImagePromos />
       </div>
     );
   }
@@ -115,7 +115,7 @@ export default function ProductImageGallery({ images = [], alt = 'สินค�
             draggable={false}
           />
         </div>
-        <ShippingBadge className="pdp-gallery-badge" />
+        <ProductImagePromos />
       </div>
     );
   }
@@ -139,7 +139,7 @@ export default function ProductImageGallery({ images = [], alt = 'สินค�
         ))}
       </div>
 
-      <ShippingBadge className="pdp-gallery-badge" />
+      <ProductImagePromos />
 
       <span className="pdp-gallery-counter" aria-live="polite">
         {index + 1}/{count}

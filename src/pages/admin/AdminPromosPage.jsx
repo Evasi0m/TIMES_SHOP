@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import AdminNav from '../../components/admin/AdminNav.jsx';
+import AdminPageShell from '../../components/admin/AdminPageShell.jsx';
+import AdminStatGrid from '../../components/admin/AdminStatGrid.jsx';
 import PromoDistributeSheet from '../../components/admin/PromoDistributeSheet.jsx';
+import { Skeleton } from '../../components/Skeleton.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { usePromo } from '../../context/PromoContext.jsx';
 import { shopApi } from '../../lib/shop-api.js';
@@ -32,6 +34,16 @@ export default function AdminPromosPage() {
     load();
   }, [load]);
 
+  const stats = useMemo(() => {
+    const active = promos.filter((p) => p.status === 'active').length;
+    const inactive = promos.filter((p) => p.status === 'inactive').length;
+    return [
+      { label: 'โปรทั้งหมด', value: promos.length },
+      { label: 'ใช้งานอยู่', value: active, hint: active ? 'แสดงบนร้าน' : undefined },
+      { label: 'ปิดแล้ว', value: inactive },
+    ];
+  }, [promos]);
+
   const filtered = useMemo(() => {
     if (filterType === 'all') return promos;
     return promos.filter((p) => p.promo_type === filterType);
@@ -58,25 +70,19 @@ export default function AdminPromosPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <Link to="/account" className="text-sm text-muted transition hover:text-primary">
-            ← กลับบัญชี
-          </Link>
-          <h1 className="mt-2 font-display text-3xl text-ink lg:text-4xl">คลังโปรโมชั่น</h1>
-          <p className="mt-2 text-sm text-body">
-            สร้างและแจก code ส่วนลด — ลูกค้าได้รับสิทธิ์ทันที ราคาบนเว็บหลังลดอัตโนมัติ
-          </p>
-        </div>
-        <Link to="/admin/promos/new" className="btn-primary shrink-0">
+    <AdminPageShell
+      wide
+      title="คลังโปรโมชั่น"
+      subtitle="สร้างและแจก code ส่วนลด — ลูกค้าได้รับสิทธิ์ทันที ราคาบนเว็บหลังลดอัตโนมัติ"
+      action={
+        <Link to="/admin/promos/new" className="btn-admin-primary shrink-0">
           + สร้างโปรใหม่
         </Link>
-      </div>
+      }
+    >
+      {!loading && promos.length > 0 && <AdminStatGrid stats={stats} />}
 
-      <AdminNav />
-
-      <div className="flex flex-wrap gap-2">
+      <div className="admin-filter-bar mt-6">
         <FilterChip active={filterType === 'all'} onClick={() => setFilterType('all')} label="ทั้งหมด" />
         {PROMO_TYPE_LIST.map((type) => (
           <FilterChip
@@ -89,11 +95,20 @@ export default function AdminPromosPage() {
       </div>
 
       {loading ? (
-        <p className="text-muted">กำลังโหลด...</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="admin-card admin-card--pad space-y-3">
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ))}
+        </div>
       ) : filtered.length === 0 ? (
-        <div className="card-canvas p-8 text-center">
+        <div className="admin-card admin-card--pad py-10 text-center">
           <p className="text-body">ยังไม่มีโปรในคลัง</p>
-          <Link to="/admin/promos/new" className="btn-primary mt-4 inline-flex">
+          <Link to="/admin/promos/new" className="btn-admin-primary mt-4 inline-flex">
             สร้างโปรแรก
           </Link>
         </div>
@@ -102,7 +117,9 @@ export default function AdminPromosPage() {
           {PROMO_TYPE_LIST.map((type) =>
             grouped[type]?.length ? (
               <section key={type} className="space-y-3">
-                <h2 className="font-display text-lg text-ink">{PROMO_TYPE_LABELS[type]}</h2>
+                <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
+                  {PROMO_TYPE_LABELS[type]}
+                </h2>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {grouped[type].map((promo) => (
                     <PromoCard
@@ -139,7 +156,7 @@ export default function AdminPromosPage() {
           refreshCustomerPromos();
         }}
       />
-    </div>
+    </AdminPageShell>
   );
 }
 
@@ -148,9 +165,7 @@ function FilterChip({ active, onClick, label }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3 py-1.5 text-sm font-medium transition min-h-[44px] ${
-        active ? 'bg-primary text-on-primary' : 'bg-surface-soft text-body hover:bg-surface-cream-strong'
-      }`}
+      className={`admin-filter-chip ${active ? 'admin-filter-chip--active' : ''}`.trim()}
     >
       {label}
     </button>
@@ -159,31 +174,36 @@ function FilterChip({ active, onClick, label }) {
 
 function PromoCard({ promo, onDistribute, onRevoke }) {
   return (
-    <article className="card-canvas flex flex-col gap-3 p-4">
+    <article className="admin-card admin-card--pad flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
-        <div>
+        <div className="flex flex-wrap items-center gap-2">
           <span className={`${statusBadgeClass(promo.status)} text-xs`}>
             {getStatusLabel(promo.status)}
           </span>
-          <h3 className="mt-2 font-display text-lg text-ink">{promo.display_name}</h3>
-          <p className="text-sm font-semibold text-primary">{formatPromoDiscount(promo)}</p>
+          <span className="badge-pill text-xs">{PROMO_TYPE_LABELS[promo.promo_type]}</span>
         </div>
-        <span className="badge-pill text-xs">{PROMO_TYPE_LABELS[promo.promo_type]}</span>
       </div>
-      <p className="text-xs text-muted">{formatPromoPeriod(promo)}</p>
-      {promo.grant_count > 0 && (
-        <p className="text-xs text-body">แจกแล้ว {promo.grant_count} ราย</p>
-      )}
-      <div className="mt-auto flex flex-wrap gap-2 pt-2">
-        <Link to={`/admin/promos/${promo.id}/edit`} className="btn-ghost text-sm">
+
+      <div>
+        <h3 className="font-display text-lg text-ink">{promo.display_name}</h3>
+        <p className="mt-1 text-base font-semibold text-primary">{formatPromoDiscount(promo)}</p>
+      </div>
+
+      <div className="space-y-1 text-xs text-muted">
+        <p>{formatPromoPeriod(promo)}</p>
+        {promo.grant_count > 0 && <p>แจกแล้ว {promo.grant_count} ราย</p>}
+      </div>
+
+      <div className="admin-promo-card__actions">
+        <Link to={`/admin/promos/${promo.id}/edit`} className="btn-ghost min-h-[44px] text-sm">
           แก้ไข
         </Link>
         {promo.status !== 'inactive' && (
           <>
-            <button type="button" onClick={onDistribute} className="btn-secondary text-sm">
+            <button type="button" onClick={onDistribute} className="btn-secondary min-h-[44px] text-sm">
               แจกโปร
             </button>
-            <button type="button" onClick={onRevoke} className="btn-ghost text-sm text-error">
+            <button type="button" onClick={onRevoke} className="btn-admin-danger min-h-[44px] text-sm">
               ปิดใช้งาน
             </button>
           </>

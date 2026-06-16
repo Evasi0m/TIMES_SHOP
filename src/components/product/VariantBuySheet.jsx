@@ -6,7 +6,6 @@ import { usePromo } from '../../context/PromoContext.jsx';
 import { getProductImageAlt } from '../../lib/product-display.js';
 import ProductImage from '../ProductImage.jsx';
 import PromoPriceDisplay from '../PromoPriceDisplay.jsx';
-import ShippingBadge from '../ShippingBadge.jsx';
 import QuantityStepper from '../ui/QuantityStepper.jsx';
 
 function VariantImageGrid({ skus, selectedSkuId, onSelect }) {
@@ -124,7 +123,6 @@ export default function VariantBuySheet({
 
           <div className="min-w-0 flex-1 space-y-1.5">
             <PromoPriceDisplay value={selectedSku.unit_price} size="md" />
-            <ShippingBadge />
             <p id="variant-sheet-title" className="truncate text-sm text-muted">
               {getVariantLabel(selectedSku)}
             </p>

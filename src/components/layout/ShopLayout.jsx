@@ -16,12 +16,18 @@ export default function ShopLayout() {
   const { pathname } = useLocation();
   const { updateAvailable, reload } = useAppUpdateCheck();
   const hideBottomNav = shouldHideBottomNav(pathname);
+  const isAdminRoute = pathname.startsWith('/admin');
   const isProductPage = pathname.startsWith('/product');
-  const mainClass = hideBottomNav
-    ? isProductPage
-      ? 'mx-auto w-full max-w-container flex-1 px-4 py-2 lg:px-6 lg:py-8'
-      : 'mx-auto w-full max-w-container flex-1 px-4 py-4 lg:px-6 lg:py-8'
-    : 'main-mobile-pb mx-auto w-full max-w-container flex-1 px-4 py-4 lg:px-6 lg:py-8';
+  const mainClass = [
+    hideBottomNav
+      ? isProductPage
+        ? 'mx-auto w-full max-w-container flex-1 px-4 py-2 lg:px-6 lg:py-8'
+        : 'mx-auto w-full max-w-container flex-1 px-4 py-4 lg:px-6 lg:py-8'
+      : 'main-mobile-pb mx-auto w-full max-w-container flex-1 px-4 py-4 lg:px-6 lg:py-8',
+    isAdminRoute ? 'admin-route' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className="flex min-h-full flex-col bg-canvas font-sans">

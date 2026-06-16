@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { mapError } from '../../lib/error-map.js';
 import GoogleButton from '../../components/GoogleButton.jsx';
+import ShopButton from '../../components/ui/ShopButton.jsx';
 
 function resolveRedirectPath(location, searchParams, fallback = '/account') {
   const fromState = location.state?.from?.pathname;
@@ -72,16 +73,15 @@ export default function LoginPage() {
               className="input"
             />
           </div>
-          <button type="submit" disabled={busy} className="btn-primary w-full">
-            {busy ? (
-              <>
-                <span className="spinner" aria-hidden="true" />
-                กำลังเข้าสู่ระบบ...
-              </>
-            ) : (
-              'เข้าสู่ระบบ'
-            )}
-          </button>
+          <ShopButton
+            type="submit"
+            variant="primary"
+            className="w-full"
+            loading={busy}
+            loadingLabel="กำลังเข้าสู่ระบบ..."
+          >
+            เข้าสู่ระบบ
+          </ShopButton>
         </form>
 
         <GoogleButton />

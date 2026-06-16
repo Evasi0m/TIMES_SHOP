@@ -7,6 +7,7 @@ export default function PromoPriceDisplay({
   max,
   size = 'md',
   className = '',
+  showStrike = true,
 }) {
   const hasRange = min != null && max != null && Number(max) > Number(min);
   const lo = useDisplayPrice(min ?? value ?? 0);
@@ -14,10 +15,10 @@ export default function PromoPriceDisplay({
   const single = useDisplayPrice(value ?? min ?? 0);
 
   if (hasRange) {
-    const showStrike = lo.hasDiscount || hi.hasDiscount;
+    const showStrikeLine = showStrike && (lo.hasDiscount || hi.hasDiscount);
     return (
       <div className={`flex flex-wrap items-baseline gap-2 ${className}`.trim()}>
-        {showStrike && (
+        {showStrikeLine && (
           <PriceAmount
             min={lo.basePrice}
             max={hi.basePrice}
@@ -34,7 +35,7 @@ export default function PromoPriceDisplay({
   const { basePrice, displayPrice, hasDiscount } = single;
   return (
     <div className={`flex flex-wrap items-baseline gap-2 ${className}`.trim()}>
-      {hasDiscount && (
+      {showStrike && hasDiscount && (
         <PriceAmount value={basePrice} size="sm" muted strike />
       )}
       <PriceAmount value={displayPrice} size={size} />

@@ -10,6 +10,11 @@ import {
 export { getProductDisplayLines, getProductImageAlt, getModelCode, getCasioModelFull };
 export { getCasioModelBase } from './casio/parse-model.js';
 
+/** True when product_name indicates Casio brand (listing or SKU card). */
+export function isCasioBrandProduct(product) {
+  return /\bcasio\b/i.test(String(product?.product_name || ''));
+}
+
 /** Full SKU code — for cart keys, search context, order lines. */
 export function getSkuDisplayName(product) {
   if (!product) return 'สินค้า';

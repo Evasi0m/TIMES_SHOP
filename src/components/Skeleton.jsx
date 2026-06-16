@@ -4,12 +4,17 @@ export function Skeleton({ className = '' }) {
 
 export function ProductCardSkeleton() {
   return (
-    <div className="card-canvas p-3">
-      <Skeleton className="aspect-square w-full rounded-lg" />
-      <div className="mt-2 space-y-2">
-        <Skeleton className="h-4 w-[80%]" />
-        <Skeleton className="h-3 w-[60%]" />
-        <Skeleton className="h-5 w-[40%]" />
+    <div className="product-card">
+      <div className="product-card__media">
+        <Skeleton className="h-full w-full rounded-none" />
+      </div>
+      <div className="product-card__body">
+        <Skeleton className="h-4 w-[90%]" />
+        <Skeleton className="h-4 w-[70%]" />
+        <div className="product-card__price-row">
+          <Skeleton className="h-5 w-[45%]" />
+          <Skeleton className="h-3 w-[35%]" />
+        </div>
       </div>
     </div>
   );

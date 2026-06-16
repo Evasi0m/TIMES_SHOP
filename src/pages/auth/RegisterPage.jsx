@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { mapError } from '../../lib/error-map.js';
 import GoogleButton from '../../components/GoogleButton.jsx';
+import ShopButton from '../../components/ui/ShopButton.jsx';
 
 function resolveRedirectPath(location, searchParams, fallback = '/account') {
   const fromState = location.state?.from?.pathname;
@@ -95,16 +96,15 @@ export default function RegisterPage() {
             />
             <p className="mt-1 text-xs text-muted">อย่างน้อย 6 ตัวอักษร</p>
           </div>
-          <button type="submit" disabled={busy} className="btn-primary w-full">
-            {busy ? (
-              <>
-                <span className="spinner" aria-hidden="true" />
-                กำลังสมัคร...
-              </>
-            ) : (
-              'สมัครสมาชิก'
-            )}
-          </button>
+          <ShopButton
+            type="submit"
+            variant="primary"
+            className="w-full"
+            loading={busy}
+            loadingLabel="กำลังสมัคร..."
+          >
+            สมัครสมาชิก
+          </ShopButton>
         </form>
 
         <GoogleButton />
