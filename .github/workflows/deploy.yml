@@ -24,6 +24,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test
       - name: Build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -33,7 +37,7 @@ jobs:
           VITE_SHOP_NAME: TIMES STORE
           VITE_BUILD_ID: ${{ github.sha }}
           # false = real Edge Functions (Hybrid B). Requires Shop + POS secrets above.
-          VITE_USE_MOCK_API: ${{ secrets.VITE_USE_MOCK_API || 'true' }}
+          VITE_USE_MOCK_API: ${{ secrets.VITE_USE_MOCK_API || 'false' }}
           VITE_GOOGLE_REDIRECT_URL: ${{ secrets.VITE_GOOGLE_REDIRECT_URL }}
         run: npm run build
       - name: Write version manifest
