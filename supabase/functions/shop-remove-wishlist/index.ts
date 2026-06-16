@@ -1,0 +1,28 @@
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { createServiceClient, getUser, requireAuth } from '../_shared/auth.ts';
+import { handleOptions, jsonResponse, readJson } from '../_shared/http.ts';
+
+Deno.serve(async (req) => {
+  const opt = handleOptions(req);
+  if (opt) return opt;
+
+  const user = await getUser(req);
+  const denied = requireAuth(user);
+  if (denied) return jsonResponse(denied);
+
+  const body = await readJson<{ tiktok_sku_id?: string }>(req);
+  const skuId = String(body.tiktok_sku_id || '');
+  if (!skuId) {
+    return jsonResponse({ ok: false, error: 'validation_failed', message: 'ไม่พบ SKU' });
+  }
+
+  const db = createServiceClient();
+  const { error } = await db
+    .from('customer_wishlist')
+    .delete()
+    .eq('user_id', user!.id)
+    .eq('tiktok_sku_id', skuId);
+
+  if (error) return jsonResponse({ ok: false, error: 'db_error', message: error.message });
+  return jsonResponse({ ok: true });
+});

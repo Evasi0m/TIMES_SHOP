@@ -6,7 +6,7 @@ import { ROUTER_BASENAME } from './lib/config.js';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { CartProvider } from './context/CartContext.jsx';
 import { ShippingProvider } from './context/ShippingContext.jsx';
-import { PromoProvider } from './context/PromoContext.jsx';
+import { WishlistProvider } from './context/WishlistContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 import './index.css';
 
@@ -17,9 +17,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <AuthProvider>
           <ShippingProvider>
             <PromoProvider>
-              <CartProvider>
-                <App />
-              </CartProvider>
+              <WishlistProvider>
+                <CartProvider>
+                  <App />
+                </CartProvider>
+              </WishlistProvider>
             </PromoProvider>
           </ShippingProvider>
         </AuthProvider>

@@ -52,6 +52,20 @@ export default function PromosPage() {
                   <h2 className="mt-1 font-display text-lg text-ink">{promo.display_name}</h2>
                   <p className="text-sm font-semibold text-primary">{formatPromoDiscount(promo)}</p>
                   <p className="mt-1 text-xs text-muted">{PROMO_TYPE_LABELS[promo.promo_type]}</p>
+                  {(promo.public_code || promo.internal_code) && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <code className="rounded bg-canvas px-2 py-1 text-xs font-mono text-ink">
+                        {promo.public_code || promo.internal_code}
+                      </code>
+                      <button
+                        type="button"
+                        className="text-xs text-primary underline"
+                        onClick={() => navigator.clipboard?.writeText(promo.public_code || promo.internal_code)}
+                      >
+                        คัดลอก
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <p className="mt-2 text-xs text-muted">{formatPromoPeriod(promo)}</p>

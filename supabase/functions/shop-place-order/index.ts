@@ -1,6 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createServiceClient, getUser } from '../_shared/auth.ts';
 import { handleOptions, jsonResponse, readJson } from '../_shared/http.ts';
+import { quoteOrder, recordPromoRedemptions } from '../_shared/quote-order.ts';
 
 Deno.serve(async (req) => {
   const opt = handleOptions(req);
@@ -19,10 +20,8 @@ Deno.serve(async (req) => {
     });
   }
 
-  const forward = {
-    ...payload,
-    customer_user_id: user?.id ?? payload.customer_user_id ?? null,
-  };
+  const customerUserId = user?.id ?? (payload.customer_user_id as string | null) ?? null;
+  const shippingFee = Number(payload.shipping_fee) || 0;
 
   const validateRes = await fetch(`${posUrl}/functions/v1/shop-validate-cart`, {
     method: 'POST',
@@ -32,9 +31,9 @@ Deno.serve(async (req) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      items: forward.items,
-      shipping_fee: forward.shipping_fee,
-      discount: forward.discount,
+      items: payload.items,
+      shipping_fee: shippingFee,
+      discount: 0,
     }),
   });
   const validated = await validateRes.json();
@@ -47,6 +46,28 @@ Deno.serve(async (req) => {
     });
   }
 
+  const subtotal = Number(validated.subtotal) || 0;
+  const db = createServiceClient();
+  const quote = await quoteOrder(db, {
+    subtotal,
+    shippingFee,
+    paymentMethod: String(payload.payment_method || ''),
+    appliedPromoIds: (payload.applied_promo_ids as string[]) || [],
+    couponCode: (payload.coupon_code as string) || null,
+    userId: customerUserId,
+  });
+
+  const forward = {
+    ...payload,
+    items: validated.items,
+    customer_user_id: customerUserId,
+    shipping_fee: quote.shipping_fee,
+    discount: quote.discount,
+    applied_promo_ids: quote.applied_promo_ids,
+    coupon_code: quote.coupon_code,
+    grand_total: quote.grand_total,
+  };
+
   const placeRes = await fetch(`${posUrl}/functions/v1/shop-place-order`, {
     method: 'POST',
     headers: {
@@ -57,5 +78,16 @@ Deno.serve(async (req) => {
     body: JSON.stringify(forward),
   });
   const placed = await placeRes.json();
+
+  if (placed?.ok && placed.order_id && quote.applied_promo_ids.length) {
+    await recordPromoRedemptions(
+      db,
+      Number(placed.order_id),
+      customerUserId,
+      quote.applied_promo_ids,
+      quote.breakdown,
+    );
+  }
+
   return jsonResponse(placed);
 });

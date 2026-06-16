@@ -11,6 +11,7 @@ export function PromoProvider({ children }) {
   const userId = user?.id ?? null;
   const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [couponCode, setCouponCode] = useState('');
 
   const refresh = useCallback(async () => {
     const res = await shopApi.getActivePromos({ user_id: userId });
@@ -32,6 +33,8 @@ export function PromoProvider({ children }) {
       promos,
       loading,
       refresh,
+      couponCode,
+      setCouponCode,
       hasProductDiscount: hasActivePromoType(
         promos,
         PROMO_TYPES.PRODUCT_DISCOUNT,
@@ -41,7 +44,7 @@ export function PromoProvider({ children }) {
       getDisplayPrice,
       getOrderTotals,
     };
-  }, [promos, loading, refresh]);
+  }, [promos, loading, refresh, couponCode]);
 
   return <PromoContext.Provider value={value}>{children}</PromoContext.Provider>;
 }

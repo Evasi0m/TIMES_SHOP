@@ -16,7 +16,9 @@ import ProductActionBar from '../components/product/ProductActionBar.jsx';
 import ProductImageGallery from '../components/product/ProductImageGallery.jsx';
 import ProductTabNav from '../components/product/ProductTabNav.jsx';
 import RelatedProductsRow from '../components/product/RelatedProductsRow.jsx';
+import WishlistButton from '../components/product/WishlistButton.jsx';
 import VariantBuySheet from '../components/product/VariantBuySheet.jsx';
+import { trackRecentlyViewed, getRecentlyViewed } from '../hooks/useRecentlyViewed.js';
 import PromoPriceDisplay from '../components/PromoPriceDisplay.jsx';
 import BannerAlert from '../components/ui/BannerAlert.jsx';
 import { Skeleton } from '../components/Skeleton.jsx';
@@ -26,7 +28,7 @@ export default function ProductPage() {
   const { skuId, productId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const { addItem, replaceCart } = useCart();
   const { shippingLabel } = useShipping();
   const { hasFreeShippingPromo } = usePromo();
   const toast = useToast();
@@ -95,6 +97,16 @@ export default function ProductPage() {
     () => getListingGalleryImages(listing, skus),
     [listing?.listing_image_url, listing?.tiktok_product_id, skus],
   );
+  useEffect(() => {
+    if (!product) return;
+    trackRecentlyViewed(product);
+  }, [product?.tiktok_sku_id]);
+
+  const recentlyViewed = useMemo(
+    () => getRecentlyViewed(product?.tiktok_sku_id).slice(0, 8),
+    [product?.tiktok_sku_id],
+  );
+
   const hasAnyStock = useMemo(
     () => skus.some((s) => s.in_stock ?? s.stock_available > 0),
     [skus],
@@ -167,12 +179,14 @@ export default function ProductPage() {
 
   function handleSheetConfirm({ sku, qty: nextQty, mode }) {
     const name = getSkuDisplayName(sku);
-    addItem(sku, nextQty);
-    setSheetOpen(false);
     if (mode === 'buy') {
+      replaceCart(sku, nextQty);
+      setSheetOpen(false);
       navigate('/checkout');
       return;
     }
+    addItem(sku, nextQty);
+    setSheetOpen(false);
     toast.success(`เพิ่ม "${name}" ลงตะกร้าแล้ว`);
   }
 
@@ -216,7 +230,10 @@ export default function ProductPage() {
         <ProductImageGallery images={galleryImages} alt={pageTitle} />
 
         <div className="mt-4 space-y-2">
-          <PromoPriceDisplay min={priceRange.min} max={priceRange.max} size="xl" />
+          <div className="flex items-start justify-between gap-2">
+            <PromoPriceDisplay min={priceRange.min} max={priceRange.max} size="xl" />
+            <WishlistButton product={product} className="mt-1" />
+          </div>
           <h1 className="line-clamp-2 font-display text-xl text-ink lg:text-2xl">{pageTitle}</h1>
           <p className="text-sm text-muted">
             {shouldShowUnitsSold(listingUnitsSold) && (
@@ -308,6 +325,8 @@ export default function ProductPage() {
           </h2>
           {related.length > 0 ? (
             <RelatedProductsRow products={related} />
+          ) : recentlyViewed.length > 0 ? (
+            <RelatedProductsRow products={recentlyViewed} />
           ) : (
             <div className="card-canvas p-6 text-center text-sm text-muted">
               ยังไม่มีสินค้าแนะนำ

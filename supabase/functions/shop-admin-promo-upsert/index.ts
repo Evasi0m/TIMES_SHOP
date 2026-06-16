@@ -25,6 +25,10 @@ Deno.serve(async (req) => {
     return jsonResponse({ ok: false, error: 'validation_failed', message: 'กรุณากรอกชื่อที่ลูกค้าเห็น' });
   }
 
+  const publicCode = payload.public_code != null && String(payload.public_code).trim()
+    ? String(payload.public_code).trim().toUpperCase()
+    : null;
+
   const base = {
     display_name: String(payload.display_name).trim(),
     promo_type: type,
@@ -37,6 +41,8 @@ Deno.serve(async (req) => {
       payload.max_uses != null && payload.max_uses !== '' ? Number(payload.max_uses) : null,
     is_active: payload.is_active !== false,
     distribution: String(payload.distribution ?? 'draft'),
+    public_code: publicCode,
+    code_entry_enabled: Boolean(payload.code_entry_enabled),
     updated_at: now,
   };
 

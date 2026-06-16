@@ -4,14 +4,56 @@ export function orderStatusLabel(
   status: string,
   paymentMethod: string,
   slipStatus: string | null,
+  fulfillmentStatus: string | null = null,
 ): string {
+  if (status === 'voided') return 'ยกเลิก';
   if (status === 'pending') {
     if (paymentMethod === 'transfer' && slipStatus === 'pending_review') return 'รอตรวจสลิป';
     return 'รอยืนยัน';
   }
-  if (status === 'active') return 'ยืนยันแล้ว';
-  if (status === 'voided') return 'ยกเลิก';
+  if (status === 'active') {
+    if (fulfillmentStatus === 'packing') return 'กำลังจัดเตรียม';
+    if (fulfillmentStatus === 'shipped') return 'จัดส่งแล้ว';
+    if (fulfillmentStatus === 'delivered') return 'ส่งถึงแล้ว';
+    if (fulfillmentStatus === 'paid') return 'ชำระแล้ว';
+    return 'ยืนยันแล้ว';
+  }
   return status;
+}
+
+export function buildOrderTimeline(
+  status: string,
+  paymentMethod: string,
+  slipStatus: string | null,
+  fulfillmentStatus: string | null,
+  trackingNo: string | null,
+) {
+  const steps = [
+    { id: 'placed', label: 'สั่งซื้อแล้ว', done: true },
+    {
+      id: 'confirmed',
+      label: 'ร้านยืนยัน',
+      done: status === 'active' || status === 'voided',
+    },
+  ];
+  if (paymentMethod === 'transfer') {
+    steps.push({
+      id: 'slip',
+      label: slipStatus === 'approved' ? 'ตรวจสลิปแล้ว' : slipStatus === 'rejected' ? 'สลิปถูกปฏิเสธ' : 'รอตรวจสลิป',
+      done: slipStatus === 'approved',
+    });
+  }
+  if (status === 'active') {
+    steps.push(
+      { id: 'packing', label: 'กำลังจัดเตรียม', done: ['packing', 'shipped', 'delivered'].includes(fulfillmentStatus || '') },
+      { id: 'shipped', label: trackingNo ? `จัดส่งแล้ว (${trackingNo})` : 'จัดส่งแล้ว', done: ['shipped', 'delivered'].includes(fulfillmentStatus || '') },
+      { id: 'delivered', label: 'ส่งถึงแล้ว', done: fulfillmentStatus === 'delivered' },
+    );
+  }
+  if (status === 'voided') {
+    steps.push({ id: 'cancelled', label: 'ยกเลิกแล้ว', done: true });
+  }
+  return steps;
 }
 
 type PosOrderRow = Record<string, unknown>;
@@ -22,12 +64,18 @@ export function formatWebOrder(row: PosOrderRow) {
   const paymentMethod = String(row.payment_method || '');
   const status = String(row.status || 'pending');
   const slipStatus = row.payment_slip_status ? String(row.payment_slip_status) : null;
+  const fulfillmentStatus = row.web_fulfillment_status ? String(row.web_fulfillment_status) : null;
+  const trackingNo = row.tracking_no ? String(row.tracking_no) : null;
 
   return {
     order_id: row.id,
     web_order_number: row.web_order_number,
     status,
-    status_label: orderStatusLabel(status, paymentMethod, slipStatus),
+    status_label: orderStatusLabel(status, paymentMethod, slipStatus, fulfillmentStatus),
+    web_fulfillment_status: fulfillmentStatus,
+    tracking_no: trackingNo,
+    shipped_at: row.shipped_at || null,
+    timeline: buildOrderTimeline(status, paymentMethod, slipStatus, fulfillmentStatus, trackingNo),
     sale_date: row.sale_date,
     grand_total: Number(row.grand_total),
     payment_method: paymentMethod,

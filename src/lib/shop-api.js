@@ -84,6 +84,9 @@ export const shopApi = {
   validateCart(params) {
     return USE_MOCK_API ? mockApi.validateCart(params) : invokePos('shop-validate-cart', params);
   },
+  quoteOrder(params) {
+    return USE_MOCK_API ? mockApi.quoteOrder(params) : invokeShop('shop-quote-order', params);
+  },
   placeOrder(payload) {
     return USE_MOCK_API ? mockApi.placeOrder(payload) : invokeShop('shop-place-order', payload);
   },
@@ -139,6 +142,9 @@ export const shopApi = {
       ? mockApi.getMyPromos(params)
       : invokeShop('shop-get-my-promos', params ?? {});
   },
+  applyPromoCode(params) {
+    return USE_MOCK_API ? mockApi.applyPromoCode(params) : invokeShop('shop-apply-code', params);
+  },
   adminPromoList() {
     return USE_MOCK_API ? mockApi.adminPromoList() : invokeShop('shop-admin-promo-list', {});
   },
@@ -161,5 +167,35 @@ export const shopApi = {
   },
   adminSlipReview(payload) {
     return USE_MOCK_API ? mockApi.adminSlipReview(payload) : invokeShop('shop-admin-slip-review', payload);
+  },
+  listWishlist() {
+    return USE_MOCK_API ? mockApi.listWishlist() : invokeShop('shop-list-wishlist', {});
+  },
+  addWishlist(payload) {
+    return USE_MOCK_API ? mockApi.addWishlist(payload) : invokeShop('shop-add-wishlist', payload);
+  },
+  removeWishlist(params) {
+    return USE_MOCK_API ? mockApi.removeWishlist(params) : invokeShop('shop-remove-wishlist', params);
+  },
+  cancelOrder(params) {
+    return USE_MOCK_API ? mockApi.cancelOrder(params) : invokeShop('shop-cancel-order', params);
+  },
+  adminDashboard() {
+    return USE_MOCK_API ? mockApi.adminDashboard() : invokeShop('shop-admin-dashboard', {});
+  },
+  adminBankList() {
+    return USE_MOCK_API ? mockApi.adminBankList() : invokeShop('shop-admin-bank-list', {});
+  },
+  adminBankUpsert(payload) {
+    return USE_MOCK_API ? mockApi.adminBankUpsert(payload) : invokeShop('shop-admin-bank-upsert', payload);
+  },
+  adminBankDelete(params) {
+    return USE_MOCK_API ? mockApi.adminBankDelete(params) : invokeShop('shop-admin-bank-delete', params);
+  },
+  adminProductsList(params) {
+    return USE_MOCK_API ? mockApi.adminProductsList(params) : invokeShop('shop-admin-products-list', params);
+  },
+  adminProductUpdate(payload) {
+    return USE_MOCK_API ? mockApi.adminProductUpdate(payload) : invokeShop('shop-admin-product-update', payload);
   },
 };

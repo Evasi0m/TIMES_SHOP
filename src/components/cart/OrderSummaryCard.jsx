@@ -14,6 +14,7 @@ export default function OrderSummaryCard({
   submitting = false,
   submitType = 'button',
   extraAction,
+  promoCodeSlot,
   className = '',
 }) {
   const total = grandTotal ?? subtotal + shippingFee;
@@ -57,6 +58,8 @@ export default function OrderSummaryCard({
           {shippingText}
         </span>
       </div>
+
+      {promoCodeSlot}
 
       <div className="flex justify-between border-t border-hairline pt-3">
         <span className="font-semibold text-ink">รวมทั้งสิ้น</span>

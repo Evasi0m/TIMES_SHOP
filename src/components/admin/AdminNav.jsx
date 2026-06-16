@@ -2,6 +2,28 @@ import { NavLink } from 'react-router-dom';
 
 const links = [
   {
+    to: '/admin/dashboard',
+    label: 'แดชบอร์ด',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    to: '/admin/products',
+    label: 'สินค้า',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+        <path d="M3 6h18M16 10a4 4 0 0 1-8 0" />
+      </svg>
+    ),
+  },
+  {
     to: '/admin/promos',
     label: 'คลังโปรโมชั่น',
     icon: (
@@ -20,6 +42,15 @@ const links = [
         <rect x="3" y="5" width="18" height="14" rx="2" />
         <path d="M7 15h4M7 11h8" />
         <path d="M14 9l3 3-3 3" />
+      </svg>
+    ),
+  },
+  {
+    to: '/admin/banks',
+    label: 'บัญชีธนาคาร',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <path d="M3 10h18M5 10V20M9 10V20M15 10V20M19 10V20M2 20h20M12 4l9 6H3l9-6z" />
       </svg>
     ),
   },

@@ -29,6 +29,12 @@
   margin-bottom: 12px;
 }
 
+.admin-stats-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
 .admin-zone__title {
   font-size: 1rem;
   font-weight: 700;

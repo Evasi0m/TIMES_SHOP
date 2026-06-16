@@ -13,10 +13,14 @@ import RegisterPage from './pages/auth/RegisterPage.jsx';
 import AccountPage from './pages/account/AccountPage.jsx';
 import OrdersPage from './pages/account/OrdersPage.jsx';
 import AddressesPage from './pages/account/AddressesPage.jsx';
+import WishlistPage from './pages/account/WishlistPage.jsx';
 import AdminShippingPage from './pages/admin/AdminShippingPage.jsx';
 import AdminSlipsPage from './pages/admin/AdminSlipsPage.jsx';
 import AdminPromosPage from './pages/admin/AdminPromosPage.jsx';
 import AdminPromoEditorPage from './pages/admin/AdminPromoEditorPage.jsx';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage.jsx';
+import AdminBanksPage from './pages/admin/AdminBanksPage.jsx';
+import AdminProductsPage from './pages/admin/AdminProductsPage.jsx';
 import PromosPage from './pages/account/PromosPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import ErrorBoundary, { ProductPageErrorFallback } from './components/ErrorBoundary.jsx';
@@ -48,14 +52,19 @@ export default function App() {
           <Route path="account/orders" element={<OrdersPage />} />
           <Route path="account/addresses" element={<AddressesPage />} />
           <Route path="account/promos" element={<PromosPage />} />
+          <Route path="account/wishlist" element={<WishlistPage />} />
         </Route>
 
         <Route element={<AdminRoute />}>
+          <Route path="admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="admin/promos" element={<AdminPromosPage />} />
           <Route path="admin/promos/new" element={<AdminPromoEditorPage />} />
           <Route path="admin/promos/:id/edit" element={<AdminPromoEditorPage />} />
           <Route path="admin/shipping" element={<AdminShippingPage />} />
           <Route path="admin/slips" element={<AdminSlipsPage />} />
+          <Route path="admin/banks" element={<AdminBanksPage />} />
+          <Route path="admin/products" element={<AdminProductsPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

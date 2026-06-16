@@ -64,6 +64,21 @@ export function CartProvider({ children }) {
 
   const clearCart = useCallback(() => setItems([]), []);
 
+  const replaceCart = useCallback((product, quantity = 1) => {
+    setItems([
+      {
+        tiktok_sku_id: product.tiktok_sku_id,
+        product_name: product.product_name,
+        sku_name: product.sku_name,
+        seller_sku: product.seller_sku,
+        image_url: product.image_url,
+        unit_price: product.unit_price,
+        stock_available: product.stock_available,
+        quantity,
+      },
+    ]);
+  }, []);
+
   // Refresh prices/stock + drop unavailable SKUs after a server validate-cart call.
   const applyValidatedItems = useCallback((validated) => {
     setItems((prev) =>
@@ -96,8 +111,9 @@ export function CartProvider({ children }) {
       removeItem,
       clearCart,
       applyValidatedItems,
+      replaceCart,
     };
-  }, [items, addItem, setQuantity, removeItem, clearCart, applyValidatedItems]);
+  }, [items, addItem, setQuantity, removeItem, clearCart, applyValidatedItems, replaceCart]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

@@ -25,6 +25,8 @@ const EMPTY = {
   no_expiry: true,
   max_uses: '',
   is_active: true,
+  public_code: '',
+  code_entry_enabled: false,
 };
 
 export default function AdminPromoEditorPage() {
@@ -139,6 +141,33 @@ export default function AdminPromoEditorPage() {
             </select>
             <p className="mt-1 text-xs text-muted">{PROMO_TYPE_DESCRIPTIONS[form.promo_type]}</p>
           </div>
+        </AdminFormSection>
+
+        <AdminFormSection
+          title="โค้ดสำหรับลูกค้ากรอก"
+          description="เปิดใช้เมื่อต้องการให้ลูกค้ากรอกโค้ดตอน checkout"
+        >
+          <label className="flex min-h-[44px] items-center gap-2 text-sm text-body">
+            <input
+              type="checkbox"
+              checked={form.code_entry_enabled}
+              onChange={(e) => update('code_entry_enabled', e.target.checked)}
+            />
+            ให้ลูกค้ากรอกโค้ดได้
+          </label>
+          {form.code_entry_enabled && (
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-body-strong">
+                โค้ดสาธารณะ (public code)
+              </label>
+              <input
+                value={form.public_code || ''}
+                onChange={(e) => update('public_code', e.target.value.toUpperCase())}
+                className="input uppercase"
+                placeholder="เช่น SUMMER10"
+              />
+            </div>
+          )}
         </AdminFormSection>
 
         {!isFreeShipping && (

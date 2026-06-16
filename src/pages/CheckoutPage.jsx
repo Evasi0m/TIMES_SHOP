@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useShipping } from '../context/ShippingContext.jsx';
-import { useOrderTotals } from '../context/PromoContext.jsx';
+import { usePromo } from '../context/PromoContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { shopApi } from '../lib/shop-api.js';
 import { fmtTHB } from '../lib/money.js';
@@ -12,6 +12,7 @@ import { mapError } from '../lib/error-map.js';
 import EmptyState from '../components/EmptyState.jsx';
 import BannerAlert from '../components/ui/BannerAlert.jsx';
 import OrderSummaryCard from '../components/cart/OrderSummaryCard.jsx';
+import PromoCodeInput from '../components/cart/PromoCodeInput.jsx';
 import GuestBenefitsSheet, { isGuestBenefitsDismissed } from '../components/checkout/GuestBenefitsSheet.jsx';
 
 const EMPTY_FORM = {
@@ -33,8 +34,19 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const isGuest = !user;
   const { shippingFee, shippingLabel } = useShipping();
+  const { couponCode, getOrderTotals } = usePromo();
   const [paymentMethod, setPaymentMethod] = useState('');
-  const orderTotals = useOrderTotals(subtotal, shippingFee, paymentMethod);
+  const clientTotals = getOrderTotals(subtotal, shippingFee, paymentMethod);
+  const [serverQuote, setServerQuote] = useState(null);
+  const orderTotals = serverQuote?.ok ? {
+    subtotal: serverQuote.subtotal,
+    shippingFee: serverQuote.shipping_fee,
+    shippingBase: shippingFee,
+    breakdown: serverQuote.breakdown || [],
+    grandTotal: serverQuote.grand_total,
+    appliedPromoIds: serverQuote.applied_promo_ids || [],
+    hasFreeShipping: serverQuote.shipping_fee === 0 && shippingFee > 0,
+  } : clientTotals;
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -54,6 +66,25 @@ export default function CheckoutPage() {
 
   const idempotencyKey = useMemo(() => crypto.randomUUID(), []);
   const orderTotal = orderTotals.grandTotal;
+
+  useEffect(() => {
+    if (!items.length) return;
+    let active = true;
+    shopApi.quoteOrder({
+      items: items.map((i) => ({
+        tiktok_sku_id: i.tiktok_sku_id,
+        quantity: i.quantity,
+        expected_unit_price: i.unit_price,
+      })),
+      payment_method: paymentMethod || undefined,
+      shipping_fee: shippingFee,
+      coupon_code: couponCode || null,
+      user_id: user?.id,
+    }).then((res) => {
+      if (active && res?.ok) setServerQuote(res);
+    });
+    return () => { active = false; };
+  }, [items, paymentMethod, shippingFee, couponCode, user?.id]);
 
   useEffect(() => {
     if (isGuest && !isGuestBenefitsDismissed()) {
@@ -157,13 +188,15 @@ export default function CheckoutPage() {
     setValidationIssues(null);
     try {
       // Always re-validate server-side before placing the order.
-      const validation = await shopApi.validateCart({
+      const validation = await shopApi.quoteOrder({
         items: items.map((i) => ({
           tiktok_sku_id: i.tiktok_sku_id,
           quantity: i.quantity,
           expected_unit_price: i.unit_price,
         })),
         payment_method: paymentMethod,
+        shipping_fee: shippingFee,
+        coupon_code: couponCode || null,
         user_id: user?.id,
       });
 
@@ -190,6 +223,9 @@ export default function CheckoutPage() {
         address_id: selectedAddressId || null,
         payment_method: paymentMethod,
         applied_promo_ids: validation.applied_promo_ids || orderTotals.appliedPromoIds,
+        coupon_code: couponCode || validation.coupon_code || null,
+        shipping_fee: validation.shipping_fee ?? shippingFee,
+        discount: validation.discount ?? 0,
         user_id: user?.id,
         slip_storage_path: slipPath,
         idempotency_key: idempotencyKey,
@@ -396,6 +432,7 @@ export default function CheckoutPage() {
             label: `${getSkuDisplayName(i)} × ${i.quantity}`,
             amount: fmtTHB(i.unit_price * i.quantity),
           }))}
+          promoCodeSlot={<PromoCodeInput />}
           submitLabel="ยืนยันสั่งซื้อ"
           submitType="submit"
           submitting={submitting}

@@ -13,6 +13,9 @@ import {
   getActivePromosForUser,
   getWalletPromosForUser,
   incrementPromoUsage,
+  readPromoCodes,
+  readPromoGrants,
+  writePromoGrants,
 } from './promo.mock.js';
 import { enrichCasioFromModelCode } from '../lib/casio/enrich.js';
 import { COLOR_MAP, MATERIAL_MAP } from '../lib/casio/maps.js';
@@ -358,6 +361,7 @@ function groupSkusIntoListings(rows, sort = 'newest') {
   let listings = [...groups.values()].map(toListingCatalogItem).filter(Boolean);
   if (sort === 'price_asc') listings.sort((a, b) => a.price_min - b.price_min);
   if (sort === 'price_desc') listings.sort((a, b) => b.price_max - a.price_max);
+  if (sort === 'best_selling') listings.sort((a, b) => (b.units_sold || 0) - (a.units_sold || 0));
   return listings;
 }
 
@@ -445,6 +449,7 @@ export const mockApi = {
     if (useSku) {
       if (sort === 'price_asc') list = [...list].sort((a, b) => a.unit_price - b.unit_price);
       if (sort === 'price_desc') list = [...list].sort((a, b) => b.unit_price - a.unit_price);
+      if (sort === 'best_selling') list = [...list].sort((a, b) => (b.units_sold || 0) - (a.units_sold || 0));
     }
     const total = list.length;
     const start = (page - 1) * page_size;
@@ -505,6 +510,37 @@ export const mockApi = {
       skus,
       product,
       related,
+    };
+  },
+
+  async quoteOrder(params) {
+    return mockApi.validateCart(params);
+  },
+
+  async applyPromoCode({ code, user_id } = {}) {
+    await delay();
+    const codes = readPromoCodes();
+    const normalized = String(code || '').trim().toUpperCase();
+    const promo = codes.find(
+      (p) =>
+        (p.public_code && p.public_code.toUpperCase() === normalized) ||
+        (p.internal_code && p.internal_code.toUpperCase() === normalized),
+    );
+    if (!promo) return { ok: false, error: 'not_found', message: 'ไม่พบโค้ดส่วนลดนี้' };
+    if (!promo.is_active) return { ok: false, error: 'expired', message: 'โค้ดนี้หมดอายุหรือใช้ครบแล้ว' };
+    if (promo.distribution === 'targeted' && user_id) {
+      const grants = readPromoGrants();
+      if (!grants.some((g) => g.promo_code_id === promo.id && g.user_id === user_id && !g.revoked_at)) {
+        writePromoGrants([
+          ...grants,
+          { id: crypto.randomUUID(), promo_code_id: promo.id, user_id, granted_at: new Date().toISOString(), revoked_at: null },
+        ]);
+      }
+    }
+    return {
+      ok: true,
+      promo: { ...promo, source: 'code' },
+      message: 'ใช้โค้ดส่วนลดสำเร็จ',
     };
   },
 
@@ -845,5 +881,118 @@ export const mockApi = {
     };
     writeOrders(all);
     return { ok: true, message: action === 'approve' ? 'อนุมัติสลิปแล้ว' : 'ปฏิเสธสลิปแล้ว' };
+  },
+
+  async listWishlist() {
+    await delay();
+    try {
+      const raw = localStorage.getItem('times_shop_mock_wishlist');
+      return { ok: true, items: raw ? JSON.parse(raw) : [] };
+    } catch {
+      return { ok: true, items: [] };
+    }
+  },
+
+  async addWishlist(payload) {
+    await delay();
+    const items = (await mockApi.listWishlist()).items || [];
+    const item = { ...payload, id: crypto.randomUUID(), created_at: new Date().toISOString() };
+    const next = [...items.filter((i) => i.tiktok_sku_id !== payload.tiktok_sku_id), item];
+    localStorage.setItem('times_shop_mock_wishlist', JSON.stringify(next));
+    return { ok: true, item };
+  },
+
+  async removeWishlist({ tiktok_sku_id }) {
+    await delay();
+    const items = (await mockApi.listWishlist()).items || [];
+    localStorage.setItem(
+      'times_shop_mock_wishlist',
+      JSON.stringify(items.filter((i) => i.tiktok_sku_id !== tiktok_sku_id)),
+    );
+    return { ok: true };
+  },
+
+  async cancelOrder({ order_id }) {
+    await delay();
+    const all = readOrders();
+    const idx = all.findIndex((o) => String(o.order_id) === String(order_id));
+    if (idx < 0) return { ok: false, error: 'not_found', message: 'ไม่พบออเดอร์' };
+    if (all[idx].status !== 'pending') {
+      return { ok: false, error: 'invalid_state', message: 'ออเดอร์นี้ยกเลิกไม่ได้แล้ว' };
+    }
+    all[idx] = { ...all[idx], status: 'voided', status_label: 'ยกเลิก' };
+    writeOrders(all);
+    return { ok: true, message: 'ยกเลิกออเดอร์แล้ว', status: 'voided' };
+  },
+
+  async adminDashboard() {
+    await delay();
+    const all = readOrders();
+    const pending = all.filter((o) => o.status === 'pending').length;
+    const active = all.filter((o) => o.status === 'active').length;
+    const revenue = all.filter((o) => o.status !== 'voided').reduce((s, o) => s + (o.grand_total || 0), 0);
+    const slipsPending = all.filter((o) => o.payment_method === 'transfer' && o.payment_slip_status === 'pending_review').length;
+    return {
+      ok: true,
+      stats: { orders_30d: all.length, pending_orders: pending, active_orders: active, revenue_30d: revenue, slips_pending: slipsPending },
+    };
+  },
+
+  async adminBankList() {
+    await delay();
+    try {
+      const raw = localStorage.getItem('times_shop_mock_banks');
+      return { ok: true, accounts: raw ? JSON.parse(raw) : [] };
+    } catch {
+      return { ok: true, accounts: [] };
+    }
+  },
+
+  async adminBankUpsert(payload) {
+    await delay();
+    const res = await mockApi.adminBankList();
+    let accounts = res.accounts || [];
+    const row = {
+      id: payload.id || crypto.randomUUID(),
+      bank_name: payload.bank_name,
+      account_number: payload.account_number,
+      account_name: payload.account_name,
+      is_active: payload.is_active !== false,
+    };
+    if (payload.id) accounts = accounts.map((a) => (a.id === payload.id ? row : a));
+    else accounts.push(row);
+    localStorage.setItem('times_shop_mock_banks', JSON.stringify(accounts));
+    return { ok: true, account: row };
+  },
+
+  async adminBankDelete({ id }) {
+    await delay();
+    const res = await mockApi.adminBankList();
+    localStorage.setItem('times_shop_mock_banks', JSON.stringify((res.accounts || []).filter((a) => a.id !== id)));
+    return { ok: true };
+  },
+
+  async adminProductsList({ q = '', page = 1, page_size = 50 } = {}) {
+    await delay();
+    let list = ENRICHED_PRODUCTS.map(toCatalogItem);
+    if (q) {
+      const needle = q.toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.product_name.toLowerCase().includes(needle) ||
+          (p.sku_name || '').toLowerCase().includes(needle),
+      );
+    }
+    const start = (page - 1) * page_size;
+    return { ok: true, items: list.slice(start, start + page_size), total: list.length, page, page_size };
+  },
+
+  async adminProductUpdate({ tiktok_sku_id, is_published, soft_delete }) {
+    await delay();
+    const p = PRODUCTS.find((x) => x.tiktok_sku_id === tiktok_sku_id);
+    if (!p) return { ok: false, error: 'not_found', message: 'ไม่พบ SKU' };
+    if (is_published != null) p.is_published = is_published;
+    if (soft_delete) p.deleted_at = new Date().toISOString();
+    return { ok: true, product: { tiktok_sku_id, is_published: p.is_published, deleted_at: p.deleted_at } };
   },
 };

@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useCart } from '../../context/CartContext.jsx';
+import { useDisplayPrice } from '../../context/PromoContext.jsx';
 import { getProductDisplayLines, getProductImageAlt } from '../../lib/product-display.js';
+import { fmtTHB } from '../../lib/money.js';
 import ProductImage from '../ProductImage.jsx';
 import QuantityStepper from '../ui/QuantityStepper.jsx';
 import PriceAmount from '../ui/PriceAmount.jsx';
@@ -8,6 +11,8 @@ import { TrashIcon } from '../icons.jsx';
 export default function CartLineItem({ item, onQuantityChange, onRemove }) {
   const { title, subtitle } = getProductDisplayLines(item);
   const overStock = item.quantity > item.stock_available;
+  const { basePrice, displayPrice, hasDiscount } = useDisplayPrice(item.unit_price);
+  const lineTotal = displayPrice * item.quantity;
 
   return (
     <div className="card-canvas flex gap-3 p-3">
@@ -25,7 +30,19 @@ export default function CartLineItem({ item, onQuantityChange, onRemove }) {
           {title}
         </Link>
         {subtitle && <p className="truncate text-sm text-muted">{subtitle}</p>}
-        <PriceAmount value={item.unit_price} size="md" className="mt-1" />
+        <div className="mt-1">
+          {hasDiscount ? (
+            <div className="flex flex-wrap items-baseline gap-2">
+              <PriceAmount value={basePrice} size="sm" muted strike />
+              <PriceAmount value={displayPrice} size="md" />
+            </div>
+          ) : (
+            <PriceAmount value={item.unit_price} size="md" />
+          )}
+          {item.quantity > 1 && (
+            <p className="text-xs text-muted">รวม {fmtTHB(lineTotal)}</p>
+          )}
+        </div>
         {overStock && (
           <p className="text-xs text-error">คงเหลือเพียง {item.stock_available} ชิ้น</p>
         )}

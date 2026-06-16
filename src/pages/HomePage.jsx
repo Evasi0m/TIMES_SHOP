@@ -7,27 +7,29 @@ import SectionHeader from '../components/layout/SectionHeader.jsx';
 import BannerAlert from '../components/ui/BannerAlert.jsx';
 import { SHOP_NAME } from '../lib/config.js';
 import { useShipping } from '../context/ShippingContext.jsx';
+import { getRecentlyViewed } from '../hooks/useRecentlyViewed.js';
 
 export default function HomePage() {
   const { shippingPromoText } = useShipping();
-  const [items, setItems] = useState([]);
+  const [featured, setFeatured] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const recent = getRecentlyViewed();
 
   useEffect(() => {
     let active = true;
-    shopApi.getCatalog({
-      page: 1,
-      page_size: 8,
-      include_facets: false,
-      include_items: true,
-    }).then((res) => {
+    Promise.all([
+      shopApi.getCatalog({ page: 1, page_size: 8, include_facets: false, include_items: true }),
+      shopApi.getCatalog({ page: 1, page_size: 8, sort: 'best_selling', include_facets: false, include_items: true }),
+    ]).then(([featuredRes, bestRes]) => {
       if (!active) return;
-      if (res.ok) {
-        setItems(res.items);
-        setError(null);
+      if (featuredRes.ok) setFeatured(featuredRes.items);
+      if (bestRes.ok) setBestSellers(bestRes.items);
+      if (!featuredRes.ok && !bestRes.ok) {
+        setError(featuredRes.message || featuredRes.error || 'โหลดสินค้าไม่สำเร็จ');
       } else {
-        setError(res.message || res.error || 'โหลดสินค้าไม่สำเร็จ');
+        setError(null);
       }
       setLoading(false);
     }).catch(() => {
@@ -55,15 +57,39 @@ export default function HomePage() {
         </div>
       </section>
 
+      {recent.length > 0 && (
+        <section className="space-y-4 lg:space-y-6">
+          <SectionHeader title="ดูล่าสุด" />
+          <div className="product-grid">
+            {recent.slice(0, 6).map((p) => (
+              <ProductCard key={p.tiktok_sku_id || p.tiktok_product_id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="space-y-4 lg:space-y-6">
-        <SectionHeader title="สินค้าแนะนำ" action={{ label: 'ดูทั้งหมด', href: '/catalog' }} />
+        <SectionHeader title="สินค้าขายดี" action={{ label: 'ดูทั้งหมด', href: '/catalog?sort=best_selling' }} />
         {loading ? (
           <ProductGridSkeleton count={8} />
         ) : error ? (
           <BannerAlert variant="error">{error}</BannerAlert>
         ) : (
           <div className="product-grid">
-            {items.map((p) => (
+            {bestSellers.map((p) => (
+              <ProductCard key={`best-${p.tiktok_product_id || p.tiktok_sku_id}`} product={p} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-4 lg:space-y-6">
+        <SectionHeader title="สินค้าแนะนำ" action={{ label: 'ดูทั้งหมด', href: '/catalog' }} />
+        {loading ? (
+          <ProductGridSkeleton count={8} />
+        ) : error ? null : (
+          <div className="product-grid">
+            {featured.map((p) => (
               <ProductCard key={p.tiktok_product_id || p.tiktok_sku_id} product={p} />
             ))}
           </div>

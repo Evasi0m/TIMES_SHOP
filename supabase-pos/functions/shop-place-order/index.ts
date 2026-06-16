@@ -108,7 +108,9 @@ Deno.serve(async (req) => {
     }
 
     const shippingFee = Number(body.shipping_fee) || 0;
-    const grandTotal = subtotal + shippingFee;
+    const discount = Math.max(0, Number(body.discount) || 0);
+    const totalAfterDiscount = Math.max(0, subtotal - discount);
+    const grandTotal = Math.max(0, totalAfterDiscount + shippingFee);
     const addressParts = [
       shipping.address_line,
       shipping.subdistrict,
@@ -128,7 +130,7 @@ Deno.serve(async (req) => {
         status: 'pending',
         payment_method: paymentMethod,
         subtotal,
-        total_after_discount: subtotal,
+        total_after_discount: totalAfterDiscount,
         grand_total: grandTotal,
         shipping_fee: shippingFee,
         customer_user_id: body.customer_user_id || null,

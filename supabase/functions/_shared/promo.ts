@@ -29,6 +29,8 @@ export function toClientPromo(promo: PromoRow, source: string) {
     expires_at: promo.expires_at,
     is_active: promo.is_active,
     distribution: promo.distribution,
+    public_code: (promo as PromoRow & { public_code?: string | null }).public_code ?? null,
+    code_entry_enabled: (promo as PromoRow & { code_entry_enabled?: boolean }).code_entry_enabled ?? false,
   };
 }
 

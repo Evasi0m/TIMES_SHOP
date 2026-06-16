@@ -3,6 +3,9 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { shopApi } from '../lib/shop-api.js';
 import { fmtTHB } from '../lib/money.js';
+import { mapError } from '../lib/error-map.js';
+import { useToast } from '../context/ToastContext.jsx';
+import OrderTimeline from '../components/order/OrderTimeline.jsx';
 import { CheckIcon } from '../components/icons.jsx';
 import { Skeleton } from '../components/Skeleton.jsx';
 
@@ -10,11 +13,13 @@ export default function OrderSuccessPage() {
   const { orderId } = useParams();
   const location = useLocation();
   const { user } = useAuth();
+  const toast = useToast();
   const isGuest = !user;
   const passed = location.state?.order;
 
   const [order, setOrder] = useState(passed || null);
   const [loading, setLoading] = useState(!passed && !isGuest);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (passed || isGuest) return;
@@ -29,7 +34,24 @@ export default function OrderSuccessPage() {
     };
   }, [orderId, passed, isGuest]);
 
+  async function handleCancel() {
+    if (!confirm('ยกเลิกออเดอร์นี้?')) return;
+    setCancelling(true);
+    try {
+      const res = await shopApi.cancelOrder({ order_id: orderId });
+      if (!res.ok) {
+        toast.error(mapError(res));
+        return;
+      }
+      toast.success('ยกเลิกออเดอร์แล้ว');
+      setOrder((o) => (o ? { ...o, status: 'voided', status_label: 'ยกเลิก' } : o));
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   const isTransfer = order?.payment_method === 'transfer';
+  const canCancel = !isGuest && order?.status === 'pending';
 
   return (
     <div className="mx-auto max-w-lg space-y-6 py-6 text-center">
@@ -50,7 +72,7 @@ export default function OrderSuccessPage() {
         )}
       </div>
 
-      <div className="card-canvas space-y-2 p-4 text-left lg:p-6">
+      <div className="card-canvas space-y-4 p-4 text-left lg:p-6">
         {loading ? (
           <>
             <Skeleton className="h-5 w-1/2" />
@@ -66,10 +88,22 @@ export default function OrderSuccessPage() {
               <span className="text-muted">สถานะ</span>
               <span className="font-medium text-primary">{order.status_label || 'รอยืนยัน'}</span>
             </div>
+            {order.tracking_no && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted">เลขพัสดุ</span>
+                <span className="font-medium text-ink">{order.tracking_no}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm">
               <span className="text-muted">ยอดสุทธิ</span>
               <span className="font-bold text-primary">{fmtTHB(order.grand_total)}</span>
             </div>
+            {order.timeline?.length > 0 && (
+              <div className="border-t border-hairline pt-4">
+                <p className="mb-3 text-sm font-semibold text-ink">สถานะการจัดส่ง</p>
+                <OrderTimeline steps={order.timeline} />
+              </div>
+            )}
           </>
         ) : (
           <p className="text-sm text-muted">
@@ -81,6 +115,16 @@ export default function OrderSuccessPage() {
       </div>
 
       <div className="flex flex-col gap-2">
+        {canCancel && (
+          <button
+            type="button"
+            className="btn-danger w-full"
+            disabled={cancelling}
+            onClick={handleCancel}
+          >
+            {cancelling ? 'กำลังยกเลิก...' : 'ยกเลิกออเดอร์'}
+          </button>
+        )}
         {isGuest ? (
           <>
             <Link to="/auth/register?from=/account/orders" className="btn-primary w-full">

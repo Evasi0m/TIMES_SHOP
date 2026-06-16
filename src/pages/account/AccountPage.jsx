@@ -70,6 +70,12 @@ export default function AccountPage() {
           ที่อยู่จัดส่ง <span className="text-muted">›</span>
         </Link>
         <Link
+          to="/account/wishlist"
+          className="flex min-h-[44px] items-center justify-between p-4 text-base text-ink transition hover:bg-surface-soft/50"
+        >
+          รายการโปรด <span className="text-muted">›</span>
+        </Link>
+        <Link
           to="/account/promos"
           className="flex min-h-[44px] items-center justify-between p-4 text-base text-ink transition hover:bg-surface-soft/50"
         >

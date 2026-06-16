@@ -7,7 +7,7 @@ import { formatWebOrder } from '../_shared/web-orders.ts';
 const ORDER_SELECT = `
   id, web_order_number, status, sale_date, grand_total, payment_method,
   shipping_recipient_name, shipping_phone, shipping_address, shipping_postal_code,
-  buyer_name, payment_slip_status,
+  buyer_name, payment_slip_status, web_fulfillment_status, tracking_no, shipped_at,
   sale_order_items (
     product_name, sku_name, quantity, unit_price, sku_image_url
   )

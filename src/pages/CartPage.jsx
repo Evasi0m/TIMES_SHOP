@@ -7,6 +7,7 @@ import { fmtTHB } from '../lib/money.js';
 import EmptyState from '../components/EmptyState.jsx';
 import CartLineItem from '../components/cart/CartLineItem.jsx';
 import OrderSummaryCard from '../components/cart/OrderSummaryCard.jsx';
+import PromoCodeInput from '../components/cart/PromoCodeInput.jsx';
 
 export default function CartPage() {
   const { items, subtotal, setQuantity, removeItem } = useCart();
@@ -62,6 +63,7 @@ export default function CartPage() {
           itemLines={itemLines}
           submitLabel="ดำเนินการชำระเงิน"
           onSubmit={() => navigate('/checkout')}
+          promoCodeSlot={<PromoCodeInput />}
           extraAction={
             <Link to="/catalog" className="btn-ghost w-full">
               เลือกซื้อสินค้าเพิ่ม
