@@ -4,7 +4,11 @@ export default function OrderTimeline({ steps = [] }) {
   return (
     <ol className="space-y-3 text-left">
       {steps.map((step, idx) => (
-        <li key={step.id} className="flex items-start gap-3">
+        <li
+          key={step.id}
+          className="motion-slide-up flex items-start gap-3"
+          style={{ animationDelay: `${idx * 60}ms` }}
+        >
           <span
             className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
               step.done ? 'bg-success/15 text-success' : 'bg-canvas text-muted ring-1 ring-hairline'

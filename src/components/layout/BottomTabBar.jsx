@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useCart } from '../../context/CartContext.jsx';
+import CartBadge from '../ui/CartBadge.jsx';
 import { HomeIcon, GridIcon, CartIcon, UserIcon } from '../icons.jsx';
 
 const NAV_ITEMS = [
@@ -31,9 +32,10 @@ export default function BottomTabBar() {
               <span className="relative">
                 <Icon size={22} />
                 {badge && count > 0 && (
-                  <span className="absolute -right-2 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-bold text-on-primary">
-                    {count > 99 ? '99+' : count}
-                  </span>
+                  <CartBadge
+                    count={count}
+                    className="-right-2 -top-1 h-[16px] min-w-[16px] px-0.5 text-[9px]"
+                  />
                 )}
               </span>
               {label}

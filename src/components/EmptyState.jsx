@@ -3,7 +3,7 @@ import ShopButton from './ui/ShopButton.jsx';
 
 export default function EmptyState({ title, description, actionLabel, actionTo, onAction, icon }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+    <div className="motion-slide-up flex flex-col items-center justify-center gap-3 py-12 text-center">
       {icon ? (
         <div className="text-muted">{icon}</div>
       ) : (

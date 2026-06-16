@@ -49,6 +49,11 @@
     radial-gradient(ellipse 46% 42% at 52% 46%, rgba(238, 238, 238, 0.35), transparent 72%);
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
 
   --shop-page-px: 16px;
   --shop-section-gap: 24px;

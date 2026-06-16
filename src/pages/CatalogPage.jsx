@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { shopApi } from '../lib/shop-api.js';
 import ProductCard from '../components/ProductCard.jsx';
 import { ProductGridSkeleton } from '../components/Skeleton.jsx';
+import StaggerGrid from '../components/motion/StaggerGrid.jsx';
 import CatalogFiltersSkeleton, {
   SeriesChipBarSkeleton,
 } from '../components/catalog/CatalogFiltersSkeleton.jsx';
@@ -203,11 +204,11 @@ export default function CatalogPage() {
           />
         ) : (
           <>
-            <div className="product-grid">
+            <StaggerGrid className="product-grid">
               {data.items.map((p) => (
                 <ProductCard key={p.tiktok_product_id || p.tiktok_sku_id} product={p} />
               ))}
-            </div>
+            </StaggerGrid>
 
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 pt-2">

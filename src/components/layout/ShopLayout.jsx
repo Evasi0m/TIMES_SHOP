@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import AppUpdateBanner from '../AppUpdateBanner.jsx';
 import ShopHeader from './ShopHeader.jsx';
 import BottomTabBar from './BottomTabBar.jsx';
+import PageTransition from '../motion/PageTransition.jsx';
 import { useAppUpdateCheck } from '../../hooks/useAppUpdateCheck.js';
 
 function shouldHideBottomNav(pathname) {
@@ -34,7 +35,9 @@ export default function ShopLayout() {
       <ShopHeader />
       <AppUpdateBanner visible={updateAvailable} onReload={reload} />
       <main className={mainClass}>
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </main>
       {!hideBottomNav && <BottomTabBar />}
     </div>

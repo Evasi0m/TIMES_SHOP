@@ -4,6 +4,7 @@ import { SHOP_NAME } from '../../lib/config.js';
 import { useCart } from '../../context/CartContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import MiniCartDrawer from '../cart/MiniCartDrawer.jsx';
+import CartBadge from '../ui/CartBadge.jsx';
 import { CartIcon, UserIcon } from '../icons.jsx';
 
 export default function ShopHeader() {
@@ -27,7 +28,12 @@ export default function ShopHeader() {
               onClick={() => setCartOpen(true)}
             >
               <CartIcon size={22} />
-              {count > 0 && <CartBadge count={count} />}
+              {count > 0 && (
+                <CartBadge
+                  count={count}
+                  className="-right-1 -top-1 h-[18px] min-w-[18px] px-1 text-[10px]"
+                />
+              )}
             </button>
             <Link
               to={user ? '/account' : '/auth/login'}
@@ -41,13 +47,5 @@ export default function ShopHeader() {
       </header>
       <MiniCartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
-  );
-}
-
-function CartBadge({ count }) {
-  return (
-    <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-on-primary">
-      {count > 99 ? '99+' : count}
-    </span>
   );
 }

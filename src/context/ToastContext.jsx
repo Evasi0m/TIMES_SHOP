@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import { toastMotion, useReducedMotion } from '../lib/motion.js';
 
 const ToastContext = createContext(null);
 
@@ -17,6 +19,7 @@ export function ToastProvider({ children }) {
   const timers = useRef({});
   const { pathname } = useLocation();
   const noTab = shouldHideBottomNav(pathname);
+  const reduced = useReducedMotion();
 
   const dismiss = useCallback((id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -46,27 +49,44 @@ export function ToastProvider({ children }) {
     [push, dismiss]
   );
 
+  const toastVariants = reduced
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+      }
+    : toastMotion;
+
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div className={`toast-stack ${noTab ? 'toast-stack--no-tab' : ''}`}>
-        {toasts.map((t) => (
-          <button
-            type="button"
-            key={t.id}
-            onClick={() => dismiss(t.id)}
-            className={`toast-item pointer-events-auto w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-on-dark ${
-              t.type === 'success'
-                ? 'border-l-4 border-accent-teal bg-nightshade'
-                : t.type === 'error'
-                  ? 'border-l-4 border-error bg-nightshade'
-                  : 'bg-nightshade'
-            }`}
-          >
-            {t.message}
-          </button>
-        ))}
-      </div>
+      <LayoutGroup>
+        <div className={`toast-stack ${noTab ? 'toast-stack--no-tab' : ''}`}>
+          <AnimatePresence mode="popLayout">
+            {toasts.map((t) => (
+              <motion.button
+                type="button"
+                key={t.id}
+                layout={!reduced}
+                onClick={() => dismiss(t.id)}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={toastVariants}
+                className={`toast-item pointer-events-auto w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-on-dark ${
+                  t.type === 'success'
+                    ? 'border-l-4 border-accent-teal bg-nightshade'
+                    : t.type === 'error'
+                      ? 'border-l-4 border-error bg-nightshade'
+                      : 'bg-nightshade'
+                }`}
+              >
+                {t.message}
+              </motion.button>
+            ))}
+          </AnimatePresence>
+        </div>
+      </LayoutGroup>
     </ToastContext.Provider>
   );
 }

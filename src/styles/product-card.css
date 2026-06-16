@@ -17,6 +17,20 @@
   background: rgb(var(--c-surface-soft));
 }
 
+.product-card__media img {
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .product-card:hover .product-card__media img {
+    transform: scale(1.03);
+  }
+}
+
+.btn-quick-add:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
 .product-card__body {
   display: flex;
   flex-direction: column;

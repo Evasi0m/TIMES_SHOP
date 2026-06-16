@@ -43,7 +43,10 @@ export default function OrderSummaryCard({
       </div>
 
       {promoBreakdown.map((line) => (
-        <div key={`${line.id}-${line.promo_type}`} className="flex justify-between text-sm">
+        <div
+          key={`${line.id}-${line.promo_type}`}
+          className="promo-flash flex justify-between text-sm"
+        >
           <span className="text-body">{line.display_name}</span>
           <span className="font-medium text-success">-{fmtTHB(line.amount)}</span>
         </div>

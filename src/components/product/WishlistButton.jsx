@@ -33,7 +33,7 @@ export default function WishlistButton({ product, className = '' }) {
   return (
     <button
       type="button"
-      className={`icon-btn ${active ? 'text-primary' : 'text-muted'} ${className}`.trim()}
+      className={`icon-btn wishlist-btn ${active ? 'wishlist-btn--active text-primary' : 'text-muted'} ${className}`.trim()}
       aria-label={active ? 'ลบออกจากรายการโปรด' : 'เพิ่มในรายการโปรด'}
       disabled={busy}
       onClick={handleClick}

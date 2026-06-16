@@ -84,7 +84,18 @@ export default function ProductPage() {
     return () => {
       active = false;
     };
-  }, [skuId, productId, querySku]);
+    // Only refetch when navigating to a different product — not ?sku= changes within PDP.
+  }, [skuId, productId]);
+
+  // Sync selected variant from URL (back/forward) using already-loaded skus — no refetch.
+  useEffect(() => {
+    if (!querySku || !skus.length) return;
+    if (querySku === selectedSkuId) return;
+    if (skus.some((s) => s.tiktok_sku_id === querySku)) {
+      setSelectedSkuId(querySku);
+      setQty(1);
+    }
+  }, [querySku, skus, selectedSkuId]);
 
   const product = useMemo(
     () => skus.find((s) => s.tiktok_sku_id === selectedSkuId) || skus[0] || null,
@@ -145,6 +156,7 @@ export default function ProductPage() {
   }, [loading, related.length, listing?.description]);
 
   function handleSelectVariant(nextSkuId) {
+    if (nextSkuId === selectedSkuId) return;
     setSelectedSkuId(nextSkuId);
     setQty(1);
     if (productId) {

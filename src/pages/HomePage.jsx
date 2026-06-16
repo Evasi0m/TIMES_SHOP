@@ -4,6 +4,7 @@ import { shopApi } from '../lib/shop-api.js';
 import ProductCard from '../components/ProductCard.jsx';
 import { ProductGridSkeleton } from '../components/Skeleton.jsx';
 import SectionHeader from '../components/layout/SectionHeader.jsx';
+import StaggerGrid from '../components/motion/StaggerGrid.jsx';
 import BannerAlert from '../components/ui/BannerAlert.jsx';
 import { SHOP_NAME } from '../lib/config.js';
 import { useShipping } from '../context/ShippingContext.jsx';
@@ -60,11 +61,11 @@ export default function HomePage() {
       {recent.length > 0 && (
         <section className="space-y-4 lg:space-y-6">
           <SectionHeader title="ดูล่าสุด" />
-          <div className="product-grid">
+          <StaggerGrid className="product-grid">
             {recent.slice(0, 6).map((p) => (
               <ProductCard key={p.tiktok_sku_id || p.tiktok_product_id} product={p} />
             ))}
-          </div>
+          </StaggerGrid>
         </section>
       )}
 
@@ -75,11 +76,11 @@ export default function HomePage() {
         ) : error ? (
           <BannerAlert variant="error">{error}</BannerAlert>
         ) : (
-          <div className="product-grid">
+          <StaggerGrid className="product-grid">
             {bestSellers.map((p) => (
               <ProductCard key={`best-${p.tiktok_product_id || p.tiktok_sku_id}`} product={p} />
             ))}
-          </div>
+          </StaggerGrid>
         )}
       </section>
 
@@ -88,11 +89,11 @@ export default function HomePage() {
         {loading ? (
           <ProductGridSkeleton count={8} />
         ) : error ? null : (
-          <div className="product-grid">
+          <StaggerGrid className="product-grid">
             {featured.map((p) => (
               <ProductCard key={p.tiktok_product_id || p.tiktok_sku_id} product={p} />
             ))}
-          </div>
+          </StaggerGrid>
         )}
       </section>
     </div>

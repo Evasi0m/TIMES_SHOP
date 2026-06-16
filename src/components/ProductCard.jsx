@@ -115,7 +115,7 @@ export default function ProductCard({ product }) {
         {inStock && (
           <button
             type="button"
-            className="btn-secondary mt-2 w-full min-h-[40px] text-sm"
+            className="btn-secondary btn-quick-add mt-2 w-full min-h-[40px] text-sm"
             onClick={handleQuickAdd}
             disabled={adding}
           >

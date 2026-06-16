@@ -55,10 +55,10 @@ export default function OrderSuccessPage() {
 
   return (
     <div className="mx-auto max-w-lg space-y-6 py-6 text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success">
+      <div className="check-pop mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success">
         <CheckIcon size={36} />
       </div>
-      <div>
+      <div className="motion-slide-up">
         <h1 className="font-display text-3xl text-ink">สั่งซื้อสำเร็จ</h1>
         <p className="mt-2 text-base text-body">
           {isTransfer
@@ -72,7 +72,7 @@ export default function OrderSuccessPage() {
         )}
       </div>
 
-      <div className="card-canvas space-y-4 p-4 text-left lg:p-6">
+      <div className="motion-slide-up card-canvas space-y-4 p-4 text-left lg:p-6" style={{ animationDelay: '80ms' }}>
         {loading ? (
           <>
             <Skeleton className="h-5 w-1/2" />
@@ -114,7 +114,7 @@ export default function OrderSuccessPage() {
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="motion-slide-up flex flex-col gap-2" style={{ animationDelay: '120ms' }}>
         {canCancel && (
           <button
             type="button"

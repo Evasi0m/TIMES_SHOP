@@ -1,0 +1,151 @@
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes motion-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes motion-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes badge-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes check-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes promo-flash {
+  0% {
+    background-color: rgb(var(--c-primary) / 0.12);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.motion-fade-in {
+  animation: motion-fade-in var(--duration-normal) var(--ease-out) both;
+}
+
+.motion-slide-up {
+  animation: motion-slide-up var(--duration-normal) var(--ease-out) both;
+}
+
+.motion-scale-in {
+  animation: motion-scale-in var(--duration-normal) var(--ease-spring) both;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--c-surface-soft)) 0%,
+    rgb(var(--c-surface-card)) 40%,
+    rgb(var(--c-surface-soft)) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.badge-pop {
+  animation: badge-pop var(--duration-normal) var(--ease-spring);
+}
+
+.check-pop {
+  animation: check-pop var(--duration-slow) var(--ease-spring) both;
+}
+
+.promo-flash {
+  animation: promo-flash 0.8s var(--ease-out) both;
+}
+
+.wishlist-btn {
+  transition:
+    transform var(--duration-fast) var(--ease-spring),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.wishlist-btn--active {
+  transform: scale(1.12);
+}
+
+.wishlist-btn:active:not(:disabled) {
+  transform: scale(0.88);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .motion-fade-in,
+  .motion-slide-up,
+  .motion-scale-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .skeleton-shimmer {
+    animation: none;
+    background: rgb(var(--c-surface-soft));
+  }
+
+  .hover-lift:hover {
+    transform: none;
+  }
+}

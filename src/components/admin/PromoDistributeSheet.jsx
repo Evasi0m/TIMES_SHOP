@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import SlideSheet from '../motion/SlideSheet.jsx';
 import { shopApi } from '../../lib/shop-api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { mapError } from '../../lib/error-map.js';
@@ -21,7 +22,7 @@ export default function PromoDistributeSheet({ promo, open, onClose, onSuccess }
     setEmailInput('');
   }, [open]);
 
-  if (!open || !promo) return null;
+  const sheetOpen = open && !!promo;
 
   function toggleUser(id) {
     setSelected((prev) => {
@@ -61,17 +62,23 @@ export default function PromoDistributeSheet({ promo, open, onClose, onSuccess }
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center lg:items-center">
-      <button type="button" className="absolute inset-0 bg-ink/40 backdrop-blur-sm" aria-label="ปิด" onClick={onClose} />
-      <div role="dialog" aria-modal="true" className="admin-sheet-panel">
-        <div className="admin-sheet-panel__header">
-          <div>
-            <h2 className="font-display text-xl text-ink">แจกโปร: {promo.display_name}</h2>
-            <p className="mt-1 text-sm text-muted">ลูกค้าได้รับสิทธิ์ทันที — ไม่ต้องกดเก็บ code</p>
-          </div>
-        </div>
-
+    <SlideSheet
+      open={sheetOpen}
+      onClose={onClose}
+      side="bottom"
+      ariaLabel="แจกโปรโมชั่น"
+      panelClassName="admin-sheet-panel flex max-h-[92vh] w-full max-w-lg flex-col"
+      zIndex={80}
+    >
+      {promo && (
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="admin-sheet-panel__header">
+            <div>
+              <h2 className="font-display text-xl text-ink">แจกโปร: {promo.display_name}</h2>
+              <p className="mt-1 text-sm text-muted">ลูกค้าได้รับสิทธิ์ทันที — ไม่ต้องกดเก็บ code</p>
+            </div>
+          </div>
+
           <div className="admin-sheet-panel__body space-y-4">
             <div className="space-y-2">
               <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-hairline p-3 transition hover:border-ink/20">
@@ -143,12 +150,16 @@ export default function PromoDistributeSheet({ promo, open, onClose, onSuccess }
             <button type="button" onClick={onClose} className="btn-ghost min-h-[44px] flex-1">
               ยกเลิก
             </button>
-            <button type="submit" disabled={busy} className="btn-admin-primary min-h-[44px] flex-1">
+            <button
+              type="submit"
+              disabled={busy}
+              className={`btn-admin-primary min-h-[44px] flex-1${busy ? ' is-loading' : ''}`}
+            >
               {busy ? 'กำลังแจก...' : 'ยืนยันแจกโปร'}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      )}
+    </SlideSheet>
   );
 }

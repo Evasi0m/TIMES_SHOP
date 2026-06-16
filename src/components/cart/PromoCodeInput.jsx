@@ -61,7 +61,7 @@ export default function PromoCodeInput({ className = '' }) {
         </button>
       </form>
       {couponCode && (
-        <div className="flex items-center justify-between text-sm">
+        <div className="promo-flash flex items-center justify-between text-sm">
           <span className="text-success">ใช้โค้ด: {couponCode}</span>
           <button type="button" onClick={handleClear} className="text-muted underline">
             ลบโค้ด
