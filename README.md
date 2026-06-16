@@ -1,8 +1,6 @@
 # TIMES STORE (TIMES_SHOP)
 
-เว็บร้านค้าสำหรับลูกค้าทั่วไป — แยก repo จาก **TIMES_POS** แต่ใช้ Supabase project เดียวกัน
-(`zrymhhkqdcttqsdczfcr`). สร้างด้วย **Vite 5 + React 18 + Tailwind 3**, ภาษา UI หลักเป็นไทย,
-mobile-first.
+เว็บร้านค้าสำหรับลูกค้าทั่วไป — แยก repo จาก **TIMES_POS**. **Hybrid B:** Shop Supabase (auth/admin) + POS Supabase (catalog TikTok).
 
 > ข้อกำหนด/สัญญา API อยู่ใน [`docs/times-shop-handoff/`](docs/times-shop-handoff/) — อ่านก่อนแก้ไขฟีเจอร์
 
@@ -20,11 +18,13 @@ npm run preview        # ทดสอบ build
 
 | ตัวแปร | คำอธิบาย |
 |--------|----------|
-| `VITE_SUPABASE_URL` | URL ของ Supabase (project เดียวกับ POS) |
-| `VITE_SUPABASE_ANON_KEY` | **anon key เท่านั้น** — ห้ามใช้ service_role |
+| `VITE_SUPABASE_URL` | **Shop** project URL (`nfhrzxwunuvasdrujxwh`) — auth, promos, admin |
+| `VITE_SUPABASE_ANON_KEY` | Shop **anon key** เท่านั้น |
+| `VITE_POS_SUPABASE_URL` | **POS** project URL (`zrymhhkqdcttqsdczfcr`) — catalog |
+| `VITE_POS_SUPABASE_ANON_KEY` | POS **anon key** — เรียก `shop-get-catalog` |
 | `VITE_SHOP_NAME` | ชื่อร้านที่แสดง (ค่าเริ่มต้น `TIMES STORE`) |
-| `VITE_USE_MOCK_API` | `true` = ใช้ mock ใน `src/mocks/`, `false` = เรียก Edge Functions จริง |
-| `VITE_GOOGLE_REDIRECT_URL` | redirect ของ Google OAuth (เว้นว่าง = ปิดปุ่ม Google) |
+| `VITE_USE_MOCK_API` | `true` = mock, `false` = Edge Functions จริง |
+| `VITE_GOOGLE_REDIRECT_URL` | redirect Google OAuth (เว้นว่าง = ปิดปุ่ม Google) |
 
 ไฟล์ `.env` ถูก ignore ไว้แล้ว — **ห้าม commit secrets**
 
@@ -77,7 +77,12 @@ src/
 
 - Workflow: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) — build แล้ว publish `dist/`
 - ตั้ง repo **Settings → Pages → Build and deployment → GitHub Actions**
-- ตั้ง repo secrets: `VITE_SUPABASE_ANON_KEY`, `VITE_SUPABASE_URL`, (เมื่อพร้อม) `VITE_USE_MOCK_API=false`, `VITE_GOOGLE_REDIRECT_URL`
+- ตั้ง repo secrets (Settings → Secrets → Actions):
+  - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — **Shop** project
+  - `VITE_POS_SUPABASE_URL`, `VITE_POS_SUPABASE_ANON_KEY` — **POS** project (catalog)
+  - `VITE_USE_MOCK_API=false` — เมื่อ backend พร้อม
+  - `VITE_GOOGLE_REDIRECT_URL` (ถ้าใช้ Google)
+- **สำคัญ:** Vite ฝัง env ตอน `npm run build` — เปลี่ยน secret แล้วต้อง re-run workflow
 - `vite base` = `/TIMES_SHOP/`; `public/404.html` ทำ SPA fallback ให้ deep link ใช้งานได้
 
 ## ความปลอดภัย (สรุปจาก SECURITY.md)

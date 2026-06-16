@@ -28,9 +28,11 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_POS_SUPABASE_URL: ${{ secrets.VITE_POS_SUPABASE_URL }}
+          VITE_POS_SUPABASE_ANON_KEY: ${{ secrets.VITE_POS_SUPABASE_ANON_KEY }}
           VITE_SHOP_NAME: TIMES STORE
           VITE_BUILD_ID: ${{ github.sha }}
-          # Set to false in repo secrets once the shop-* Edge Functions are deployed.
+          # false = real Edge Functions (Hybrid B). Requires Shop + POS secrets above.
           VITE_USE_MOCK_API: ${{ secrets.VITE_USE_MOCK_API || 'true' }}
           VITE_GOOGLE_REDIRECT_URL: ${{ secrets.VITE_GOOGLE_REDIRECT_URL }}
         run: npm run build
