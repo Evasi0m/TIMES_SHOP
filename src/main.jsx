@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import { CartProvider } from './context/CartContext.jsx';
 import { ShippingProvider } from './context/ShippingContext.jsx';
 import { WishlistProvider } from './context/WishlistContext.jsx';
+import { PromoProvider } from './context/PromoContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 import './index.css';
 
