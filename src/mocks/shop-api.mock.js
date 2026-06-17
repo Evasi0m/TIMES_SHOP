@@ -2,7 +2,19 @@
 // Production catalog: shop-get-catalog → storefront_products (synced from TikTok Shop API).
 
 import { DEFAULT_SHIPPING_FEE, normalizeShippingFee } from '../lib/shipping.js';
-import { getClientShippingInfo, writeClientShippingFee } from '../lib/shipping-store.js';
+import { getClientShippingInfo, readClientCoverImageUrl, readClientProfileImageUrl, writeClientCoverImageUrl, writeClientProfileImageUrl, writeClientShippingFee } from '../lib/shipping-store.js';
+import {
+  getMockAnnouncementState,
+  getPublicAnnouncement,
+  saveMockAnnouncement,
+} from '../lib/announcement-store.js';
+import {
+  getMockHomepageBlocks,
+  getPublicHomepageBlocks,
+  saveMockHomepageBlocks,
+  trackMockProductView,
+  validateMockHomepageBlock,
+} from '../lib/homepage-store.js';
 import {
   adminDistributePromo,
   adminListCustomers,
@@ -513,6 +525,35 @@ export const mockApi = {
     };
   },
 
+  async getProductDescription({ tiktok_product_id } = {}) {
+    await delay();
+    const productId = String(tiktok_product_id || '').trim();
+    if (!productId) {
+      return { ok: false, error: 'validation_failed', message: 'tiktok_product_id required' };
+    }
+    return {
+      ok: true,
+      tiktok_product_id: productId,
+      description:
+        'นาฬิกา CASIO สินค้าแท้ รับประกันศูนย์ 1 ปี\n\n' +
+        '• กันน้ำตามสเปกรุ่น\n' +
+        '• วัสดุเรซินทนทาน\n' +
+        '• เหมาะสำหรับใส่ทุกวัน',
+      cached: true,
+    };
+  },
+
+  async adminSyncDescriptions({ batch_size } = {}) {
+    await delay(200);
+    return {
+      ok: true,
+      synced: Math.min(Number(batch_size) || 25, 25),
+      skipped: 0,
+      failed: 0,
+      remaining_estimate: 0,
+    };
+  },
+
   async quoteOrder(params) {
     return mockApi.validateCart(params);
   },
@@ -726,6 +767,9 @@ export const mockApi = {
   async getPaymentInfo() {
     await delay();
     const { shipping_fee, shipping_label } = getMockShippingInfo();
+    const announcement = getPublicAnnouncement();
+    const profile_image_url = readClientProfileImageUrl();
+    const cover_image_url = readClientCoverImageUrl();
     // MVP: bank accounts may be empty until admin configures them.
     return {
       ok: true,
@@ -739,6 +783,12 @@ export const mockApi = {
           account_name: 'TIMES STORE',
         },
       ],
+      announcement,
+      store: {
+        profile_image_url,
+        cover_image_url,
+        name: 'TIMES STORE',
+      },
     };
   },
 
@@ -795,17 +845,121 @@ export const mockApi = {
   async adminGetShopSettings() {
     await delay();
     const { shipping_fee, shipping_label } = getMockShippingInfo();
-    return { ok: true, shipping_fee, shipping_label };
+    return {
+      ok: true,
+      shipping_fee,
+      shipping_label,
+      profile_image_url: readClientProfileImageUrl(),
+      cover_image_url: readClientCoverImageUrl(),
+    };
   },
 
-  async adminUpdateShopSettings({ shipping_fee }) {
+  async adminUpdateShopSettings({ shipping_fee, profile_image_url, cover_image_url } = {}) {
     await delay();
-    if (shipping_fee == null || !Number.isFinite(Number(shipping_fee)) || Number(shipping_fee) < 0) {
-      return { ok: false, error: 'validation_failed', message: 'กรุณากรอกค่าจัดส่งที่ถูกต้อง' };
+    if (shipping_fee != null) {
+      if (!Number.isFinite(Number(shipping_fee)) || Number(shipping_fee) < 0) {
+        return { ok: false, error: 'validation_failed', message: 'กรุณากรอกค่าจัดส่งที่ถูกต้อง' };
+      }
+      writeClientShippingFee(shipping_fee);
     }
-    writeClientShippingFee(shipping_fee);
+    if (profile_image_url !== undefined) {
+      const trimmed = profile_image_url == null ? '' : String(profile_image_url).trim();
+      if (trimmed) {
+        try {
+          const parsed = new URL(trimmed);
+          if (!['http:', 'https:'].includes(parsed.protocol)) {
+            return { ok: false, error: 'validation_failed', message: 'URL รูปโปรไฟล์ต้องขึ้นต้นด้วย http หรือ https' };
+          }
+        } catch {
+          return { ok: false, error: 'validation_failed', message: 'URL รูปโปรไฟล์ไม่ถูกต้อง' };
+        }
+        writeClientProfileImageUrl(trimmed);
+      } else {
+        writeClientProfileImageUrl(null);
+      }
+    }
+    if (cover_image_url !== undefined) {
+      const trimmed = cover_image_url == null ? '' : String(cover_image_url).trim();
+      if (trimmed) {
+        try {
+          const parsed = new URL(trimmed);
+          if (!['http:', 'https:'].includes(parsed.protocol)) {
+            return { ok: false, error: 'validation_failed', message: 'URL รูป cover ต้องขึ้นต้นด้วย http หรือ https' };
+          }
+        } catch {
+          return { ok: false, error: 'validation_failed', message: 'URL รูป cover ไม่ถูกต้อง' };
+        }
+        writeClientCoverImageUrl(trimmed);
+      } else {
+        writeClientCoverImageUrl(null);
+      }
+    }
     const info = getMockShippingInfo();
-    return { ok: true, ...info };
+    return {
+      ok: true,
+      ...info,
+      profile_image_url: readClientProfileImageUrl(),
+      cover_image_url: readClientCoverImageUrl(),
+    };
+  },
+
+  async adminGetAnnouncement() {
+    await delay();
+    const { enabled, items } = getMockAnnouncementState();
+    return { ok: true, enabled, items };
+  },
+
+  async adminSaveAnnouncement(payload) {
+    await delay();
+    try {
+      const state = saveMockAnnouncement(payload);
+      return { ok: true, enabled: state.enabled, items: state.items };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'validation_failed',
+        message: err instanceof Error ? err.message : 'ข้อมูลไม่ถูกต้อง',
+      };
+    }
+  },
+
+  async getHomepageConfig() {
+    await delay();
+    return { ok: true, blocks: getPublicHomepageBlocks() };
+  },
+
+  async trackProductView(payload) {
+    await delay();
+    try {
+      trackMockProductView(payload);
+      return { ok: true };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'validation_failed',
+        message: err instanceof Error ? err.message : 'ข้อมูลไม่ถูกต้อง',
+      };
+    }
+  },
+
+  async adminGetHomepage() {
+    await delay();
+    return { ok: true, blocks: getMockHomepageBlocks() };
+  },
+
+  async adminSaveHomepage(payload) {
+    await delay();
+    try {
+      const blocks = (payload.blocks ?? []).map((block, index) => validateMockHomepageBlock(block, index));
+      saveMockHomepageBlocks(blocks);
+      return { ok: true, blocks };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'validation_failed',
+        message: err instanceof Error ? err.message : 'ข้อมูลไม่ถูกต้อง',
+      };
+    }
   },
 
   async getActivePromos({ user_id } = {}) {

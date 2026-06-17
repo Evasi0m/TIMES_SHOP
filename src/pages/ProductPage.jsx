@@ -19,6 +19,8 @@ import RelatedProductsRow from '../components/product/RelatedProductsRow.jsx';
 import WishlistButton from '../components/product/WishlistButton.jsx';
 import VariantBuySheet from '../components/product/VariantBuySheet.jsx';
 import { trackRecentlyViewed, getRecentlyViewed } from '../hooks/useRecentlyViewed.js';
+import { buildViewSnapshot, shouldTrackProductView } from '../lib/homepage.js';
+import { isHtmlDescription } from '../lib/product-description.js';
 import PromoPriceDisplay from '../components/PromoPriceDisplay.jsx';
 import BannerAlert from '../components/ui/BannerAlert.jsx';
 import { Skeleton } from '../components/Skeleton.jsx';
@@ -39,6 +41,8 @@ export default function ProductPage() {
   const [related, setRelated] = useState([]);
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [description, setDescription] = useState('');
+  const [descriptionLoading, setDescriptionLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -58,6 +62,8 @@ export default function ProductPage() {
     setQty(1);
     setNotFound(false);
     setError(null);
+    setDescription('');
+    setDescriptionLoading(false);
 
     const params = productId
       ? { tiktok_product_id: productId, ...(querySku ? { tiktok_sku_id: querySku } : {}) }
@@ -87,6 +93,41 @@ export default function ProductPage() {
     // Only refetch when navigating to a different product — not ?sku= changes within PDP.
   }, [skuId, productId]);
 
+  const product = useMemo(
+    () => skus.find((s) => s.tiktok_sku_id === selectedSkuId) || skus[0] || null,
+    [skus, selectedSkuId],
+  );
+
+  useEffect(() => {
+    const productKey =
+      listing?.tiktok_product_id
+      || product?.tiktok_product_id
+      || productId
+      || skus[0]?.tiktok_product_id;
+    if (!productKey || loading || notFound) return;
+
+    let active = true;
+    setDescriptionLoading(true);
+
+    shopApi.getProductDescription({ tiktok_product_id: productKey }).then((res) => {
+      if (!active) return;
+      if (res.ok) {
+        setDescription(String(res.description || '').trim());
+      } else {
+        setDescription('');
+      }
+      setDescriptionLoading(false);
+    }).catch(() => {
+      if (!active) return;
+      setDescription('');
+      setDescriptionLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [listing?.tiktok_product_id, product?.tiktok_product_id, productId, skus, loading, notFound]);
+
   // Sync selected variant from URL (back/forward) using already-loaded skus — no refetch.
   useEffect(() => {
     if (!querySku || !skus.length) return;
@@ -96,11 +137,6 @@ export default function ProductPage() {
       setQty(1);
     }
   }, [querySku, skus, selectedSkuId]);
-
-  const product = useMemo(
-    () => skus.find((s) => s.tiktok_sku_id === selectedSkuId) || skus[0] || null,
-    [skus, selectedSkuId],
-  );
 
   const priceRange = useMemo(() => computeListingPriceRange(skus), [skus]);
   const listingUnitsSold = useMemo(() => computeListingUnitsSold(skus), [skus]);
@@ -112,6 +148,30 @@ export default function ProductPage() {
     if (!product) return;
     trackRecentlyViewed(product);
   }, [product?.tiktok_sku_id]);
+
+  useEffect(() => {
+    const productKey = listing?.tiktok_product_id || product?.tiktok_product_id;
+    if (!productKey || !skus.length) return;
+    if (!shouldTrackProductView(productKey)) return;
+
+    const snapshot = buildViewSnapshot({
+      tiktok_product_id: productKey,
+      product_name: listing?.product_name || product?.product_name,
+      image_url: listing?.listing_image_url || listing?.image_url || product?.image_url,
+      listing_image_url: listing?.listing_image_url || product?.image_url,
+      price_min: priceRange.min,
+      price_max: priceRange.max,
+      price_min_in_stock: priceRange.min,
+      default_sku_id: selectedSkuId || product?.tiktok_sku_id,
+      tiktok_sku_id: selectedSkuId || product?.tiktok_sku_id,
+      sku_count: skus.length,
+      units_sold: listingUnitsSold,
+      in_stock: skus.some((s) => s.in_stock ?? s.stock_available > 0),
+      stock_available: skus.reduce((sum, s) => sum + (Number(s.stock_available) || 0), 0),
+    });
+    if (!snapshot) return;
+    shopApi.trackProductView({ tiktok_product_id: productKey, snapshot });
+  }, [listing, product, skus, selectedSkuId, priceRange, listingUnitsSold]);
 
   const recentlyViewed = useMemo(
     () => getRecentlyViewed(product?.tiktok_sku_id).slice(0, 8),
@@ -153,7 +213,7 @@ export default function ProductPage() {
 
     for (const { el } of sections) observer.observe(el);
     return () => observer.disconnect();
-  }, [loading, related.length, listing?.description]);
+  }, [loading, related.length, description, descriptionLoading]);
 
   function handleSelectVariant(nextSkuId) {
     if (nextSkuId === selectedSkuId) return;
@@ -226,7 +286,6 @@ export default function ProductPage() {
 
   const pageTitle = listing?.product_name || product.product_name;
   const inStock = product.in_stock ?? product.stock_available > 0;
-  const description = String(listing?.description || '').trim();
 
   return (
     <>
@@ -315,10 +374,23 @@ export default function ProductPage() {
           <h2 id="pdp-description-title" className="font-display text-lg text-ink">
             คำอธิบาย
           </h2>
-          {description ? (
-            <div className="card-canvas whitespace-pre-wrap p-4 text-sm leading-relaxed text-body">
-              {description}
+          {descriptionLoading ? (
+            <div className="card-canvas space-y-2 p-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-2/3" />
             </div>
+          ) : description ? (
+            isHtmlDescription(description) ? (
+              <div
+                className="card-canvas pdp-description-html p-4 text-sm leading-relaxed text-body"
+                dangerouslySetInnerHTML={{ __html: description }}
+              />
+            ) : (
+              <div className="card-canvas whitespace-pre-wrap p-4 text-sm leading-relaxed text-body">
+                {description}
+              </div>
+            )
           ) : (
             <div className="card-canvas p-6 text-center text-sm text-muted">
               ยังไม่มีคำอธิบายสินค้า

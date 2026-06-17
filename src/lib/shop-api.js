@@ -81,6 +81,11 @@ export const shopApi = {
   getProduct(params) {
     return USE_MOCK_API ? mockApi.getProduct(params) : invokePosCached('shop-get-product', params);
   },
+  getProductDescription(params) {
+    return USE_MOCK_API
+      ? mockApi.getProductDescription(params)
+      : invokeShop('shop-get-product-description', params);
+  },
   validateCart(params) {
     return USE_MOCK_API ? mockApi.validateCart(params) : invokePos('shop-validate-cart', params);
   },
@@ -131,6 +136,36 @@ export const shopApi = {
     return USE_MOCK_API
       ? mockApi.adminUpdateShopSettings(payload)
       : invokeShop('shop-admin-update-shop-settings', payload);
+  },
+  adminGetAnnouncement() {
+    return USE_MOCK_API
+      ? mockApi.adminGetAnnouncement()
+      : invokeShop('shop-admin-announcement-get', {});
+  },
+  adminSaveAnnouncement(payload) {
+    return USE_MOCK_API
+      ? mockApi.adminSaveAnnouncement(payload)
+      : invokeShop('shop-admin-announcement-save', payload);
+  },
+  getHomepageConfig() {
+    return USE_MOCK_API
+      ? mockApi.getHomepageConfig()
+      : invokeShop('shop-get-homepage', {});
+  },
+  trackProductView(payload) {
+    return USE_MOCK_API
+      ? mockApi.trackProductView(payload)
+      : invokeShop('shop-track-view', payload);
+  },
+  adminGetHomepage() {
+    return USE_MOCK_API
+      ? mockApi.adminGetHomepage()
+      : invokeShop('shop-admin-homepage-get', {});
+  },
+  adminSaveHomepage(payload) {
+    return USE_MOCK_API
+      ? mockApi.adminSaveHomepage(payload)
+      : invokeShop('shop-admin-homepage-save', payload);
   },
   getActivePromos(params) {
     return USE_MOCK_API
@@ -197,5 +232,10 @@ export const shopApi = {
   },
   adminProductUpdate(payload) {
     return USE_MOCK_API ? mockApi.adminProductUpdate(payload) : invokeShop('shop-admin-product-update', payload);
+  },
+  adminSyncDescriptions(params) {
+    return USE_MOCK_API
+      ? mockApi.adminSyncDescriptions(params)
+      : invokeShop('shop-admin-sync-descriptions', params ?? {});
   },
 };

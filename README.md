@@ -38,6 +38,12 @@ TikTok Shop API  →  shop-sync-catalog (TIMES_POS)  →  storefront_products
 TIMES_SHOP  →  shop-get-catalog  →  แสดง SKU (ราคา/สต็อก TikTok)
 ```
 
+**คำอธิบายสินค้า (PDP):** เก็บแยกบน Shop project — ดู [`docs/SHOP_PRODUCT_DESCRIPTIONS.md`](docs/SHOP_PRODUCT_DESCRIPTIONS.md)
+
+```
+TikTok Product Detail  →  shop-get-product-description (Shop EF)  →  shop_product_descriptions
+```
+
 - ห้ามเรียก `tiktok-products-search` จาก browser ลูกค้า (SECURITY.md)
 - ห้าม query `products` / `sale_orders` โดยตรงจาก Shop
 - `VITE_USE_MOCK_API=true` ใช้เฉพาะ dev offline — **ไม่ใช่ข้อมูล POS**
