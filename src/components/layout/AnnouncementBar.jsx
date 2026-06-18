@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useShipping } from '../../context/ShippingContext.jsx';
+import AnnouncementBarChrome from './AnnouncementBarChrome.jsx';
 
 function MarqueeSegment({ items }) {
   return items.map((item, index) => (
@@ -60,8 +61,7 @@ export default function AnnouncementBar() {
   const staticTrack = reducedMotion;
 
   return (
-    <div
-      className="announcement-bar group"
+    <AnnouncementBarChrome
       role="marquee"
       aria-live="polite"
       onMouseEnter={() => setPaused(true)}
@@ -69,24 +69,22 @@ export default function AnnouncementBar() {
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      <div className="announcement-bar__viewport">
-        <div
-          className={`announcement-bar__track${staticTrack ? ' announcement-bar__track--static' : ''}`}
-          style={{
-            '--marquee-duration': `${duration}s`,
-            animationPlayState: paused || staticTrack ? 'paused' : 'running',
-          }}
-        >
-          <span className="announcement-bar__content" ref={contentRef}>
+      <div
+        className={`announcement-bar__track${staticTrack ? ' announcement-bar__track--static' : ''}`}
+        style={{
+          '--marquee-duration': `${duration}s`,
+          animationPlayState: paused || staticTrack ? 'paused' : 'running',
+        }}
+      >
+        <span className="announcement-bar__content" ref={contentRef}>
+          <MarqueeSegment items={announcementItems} />
+        </span>
+        {!staticTrack && (
+          <span className="announcement-bar__content" aria-hidden="true">
             <MarqueeSegment items={announcementItems} />
           </span>
-          {!staticTrack && (
-            <span className="announcement-bar__content" aria-hidden="true">
-              <MarqueeSegment items={announcementItems} />
-            </span>
-          )}
-        </div>
+        )}
       </div>
-    </div>
+    </AnnouncementBarChrome>
   );
 }

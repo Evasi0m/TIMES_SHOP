@@ -74,6 +74,62 @@ export const toastMotion = {
   exit: { opacity: 0, y: 8, scale: 0.98, transition: { duration: DURATION.fast } },
 };
 
+/** Home store profile hero card — section entrance. */
+export const storeProfileHero = {
+  initial: { opacity: 0, y: 12 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
+  },
+};
+
+/** Cover image Ken Burns settle. */
+export const storeProfileCover = {
+  initial: { scale: 1.06 },
+  animate: {
+    scale: 1.04,
+    transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
+  },
+};
+
+/** Avatar pop on hero identity row. */
+export const storeProfileAvatarPop = {
+  initial: { opacity: 0, scale: 0.92 },
+  animate: { opacity: 1, scale: 1, transition: SPRING.pop },
+};
+
+/** Coupon dock slide-up after promos load. */
+export const storeProfileCouponDock = {
+  initial: { opacity: 0, y: 8 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: DURATION.normal, ease: [0.4, 0, 0.2, 1] },
+  },
+};
+
+export const couponTicketStagger = {
+  initial: {},
+  animate: { transition: { staggerChildren: 0.05, delayChildren: 0.06 } },
+};
+
+export const couponTicketItem = {
+  initial: { opacity: 0, y: 6 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: DURATION.normal, ease: [0.4, 0, 0.2, 1] },
+  },
+};
+
+export function getStoreProfileMotionProps({ preview = false, reduced = false } = {}) {
+  if (preview || reduced) {
+    return { initial: false, animate: 'animate' };
+  }
+  return { initial: 'initial', animate: 'animate' };
+}
+
 /** PDP description expand/collapse — spring height + soft blur fade. */
 export const descriptionExpandSpring = {
   type: 'spring',

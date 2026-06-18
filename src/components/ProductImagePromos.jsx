@@ -8,8 +8,8 @@ function FreeDeliveryIcon() {
       className="product-image-promos__icon product-image-promos__icon--white"
       src={freeDeliveryIconUrl}
       alt=""
-      width={14}
-      height={14}
+      width={11}
+      height={11}
       decoding="async"
       aria-hidden
     />
@@ -22,8 +22,8 @@ function CouponIcon() {
       className="product-image-promos__icon product-image-promos__icon--discount-tint"
       src={couponIconUrl}
       alt=""
-      width={14}
-      height={14}
+      width={11}
+      height={11}
       decoding="async"
       aria-hidden
     />

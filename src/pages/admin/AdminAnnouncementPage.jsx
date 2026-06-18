@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AdminFormSection from '../../components/admin/AdminFormSection.jsx';
 import AdminPageShell from '../../components/admin/AdminPageShell.jsx';
+import AnnouncementBarChrome from '../../components/layout/AnnouncementBarChrome.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useShipping } from '../../context/ShippingContext.jsx';
 import { shopApi } from '../../lib/shop-api.js';
@@ -25,13 +26,11 @@ function AnnouncementPreview({ enabled, items }) {
   const label = activeItems.map((item) => item.text.trim()).join(' / ');
 
   return (
-    <div className="announcement-bar announcement-bar--preview" role="marquee" aria-live="polite">
-      <div className="announcement-bar__viewport">
-        <div className="announcement-bar__track announcement-bar__track--static">
-          <span className="announcement-bar__content">{label}</span>
-        </div>
+    <AnnouncementBarChrome className="announcement-bar--preview" role="marquee" aria-live="polite">
+      <div className="announcement-bar__track announcement-bar__track--static">
+        <span className="announcement-bar__content">{label}</span>
       </div>
-    </div>
+    </AnnouncementBarChrome>
   );
 }
 
