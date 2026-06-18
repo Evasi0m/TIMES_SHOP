@@ -74,6 +74,24 @@ export const toastMotion = {
   exit: { opacity: 0, y: 8, scale: 0.98, transition: { duration: DURATION.fast } },
 };
 
+/** PDP description expand/collapse — spring height + soft blur fade. */
+export const descriptionExpandSpring = {
+  type: 'spring',
+  damping: 24,
+  stiffness: 200,
+  mass: 0.85,
+};
+
+export const descriptionContentFade = {
+  duration: 0.45,
+  ease: [0.4, 0, 0.2, 1],
+};
+
+export const descriptionOverlayFade = {
+  duration: 0.4,
+  ease: [0.4, 0, 0.2, 1],
+};
+
 export function useReducedMotion() {
   return useFramerReducedMotion();
 }

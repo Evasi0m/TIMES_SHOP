@@ -1,7 +1,7 @@
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { calcPromoTotals } from './promo-pricing.ts';
 import { findPromoByCode, loadEligiblePromos, resolvePromosByIds } from './promo-resolve.ts';
-import { isPromoActive } from './promo.ts';
+import { isPromoActive, type PromoRow } from './promo.ts';
 
 export type QuoteInput = {
   subtotal: number;

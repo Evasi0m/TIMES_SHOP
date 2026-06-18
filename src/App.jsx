@@ -8,6 +8,7 @@ import ProductPage from './pages/ProductPage.jsx';
 import CartPage from './pages/CartPage.jsx';
 import CheckoutPage from './pages/CheckoutPage.jsx';
 import OrderSuccessPage from './pages/OrderSuccessPage.jsx';
+import GuestOrderTrackPage from './pages/GuestOrderTrackPage.jsx';
 import LoginPage from './pages/auth/LoginPage.jsx';
 import RegisterPage from './pages/auth/RegisterPage.jsx';
 import AccountPage from './pages/account/AccountPage.jsx';
@@ -21,6 +22,8 @@ import AdminPromoEditorPage from './pages/admin/AdminPromoEditorPage.jsx';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage.jsx';
 import AdminBanksPage from './pages/admin/AdminBanksPage.jsx';
 import AdminProductsPage from './pages/admin/AdminProductsPage.jsx';
+import AdminAnnouncementPage from './pages/admin/AdminAnnouncementPage.jsx';
+import AdminHomepagePage from './pages/admin/AdminHomepagePage.jsx';
 import PromosPage from './pages/account/PromosPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import ErrorBoundary, { ProductPageErrorFallback } from './components/ErrorBoundary.jsx';
@@ -44,6 +47,7 @@ export default function App() {
         <Route path="cart" element={<CartPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="order/:orderId" element={<OrderSuccessPage />} />
+        <Route path="order/track" element={<GuestOrderTrackPage />} />
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
 
@@ -62,6 +66,8 @@ export default function App() {
           <Route path="admin/promos/new" element={<AdminPromoEditorPage />} />
           <Route path="admin/promos/:id/edit" element={<AdminPromoEditorPage />} />
           <Route path="admin/shipping" element={<AdminShippingPage />} />
+          <Route path="admin/announcement" element={<AdminAnnouncementPage />} />
+          <Route path="admin/homepage" element={<AdminHomepagePage />} />
           <Route path="admin/slips" element={<AdminSlipsPage />} />
           <Route path="admin/banks" element={<AdminBanksPage />} />
           <Route path="admin/products" element={<AdminProductsPage />} />

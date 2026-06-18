@@ -1,5 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { getUser, requireAuth } from '../_shared/auth.ts';
+import { createServiceClient, getUser, requireAuth } from '../_shared/auth.ts';
 import { createPosServiceClient, posNotConfiguredResponse } from '../_shared/pos-client.ts';
 import { handleOptions, jsonResponse, readJson } from '../_shared/http.ts';
 
@@ -43,5 +43,25 @@ Deno.serve(async (req) => {
     .eq('id', orderId);
 
   if (updErr) return jsonResponse({ ok: false, error: 'db_error', message: updErr.message });
-  return jsonResponse({ ok: true, message: 'ยกเลิกออเดอร์แล้ว', status: 'voided' });
+
+  const shopDb = createServiceClient();
+  const { data: redemptions } = await shopDb
+    .from('promo_redemptions')
+    .select('id')
+    .eq('order_id', orderId)
+    .is('reversed_at', null)
+    .limit(1);
+
+  const hadPromos = (redemptions?.length ?? 0) > 0;
+  if (hadPromos) {
+    const { error: decErr } = await shopDb.rpc('decrement_promo_usage', { p_order_id: orderId });
+    if (decErr) console.error('decrement_promo_usage failed:', decErr.message);
+  }
+
+  return jsonResponse({
+    ok: true,
+    message: 'ยกเลิกออเดอร์แล้ว',
+    status: 'voided',
+    promos_restored: hadPromos,
+  });
 });

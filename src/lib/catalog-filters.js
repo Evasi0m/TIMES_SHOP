@@ -4,6 +4,7 @@ import { SERIES_SUBS } from './casio/sub-type-rules.js';
 
 export const SORT_OPTIONS = [
   { id: 'newest', label: 'ใหม่ล่าสุด' },
+  { id: 'best_selling', label: 'สินค้าขายดี' },
   { id: 'price_asc', label: 'ราคา: ต่ำ → สูง' },
   { id: 'price_desc', label: 'ราคา: สูง → ต่ำ' },
 ];
@@ -61,6 +62,7 @@ export function buildCatalogApiParams(filters, { pageSize = 24 } = {}) {
     page,
     page_size: pageSize,
     sort,
+    group_by: 'product',
     include_facets: false,
     include_items: true,
   };
@@ -81,6 +83,7 @@ export function buildCatalogFacetParams(filters) {
     page: 1,
     page_size: 1,
     sort,
+    group_by: 'product',
     include_facets: true,
     include_items: false,
   };

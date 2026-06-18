@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext.jsx';
+import { useCart } from './CartContext.jsx';
 import { shopApi } from '../lib/shop-api.js';
+import { resolvePdpPrice } from '../lib/pricing-policy.js';
 import { calcDisplayUnitPrice, calcPromoTotals, hasActivePromoType } from '../lib/promo-pricing.js';
 import { PROMO_TYPES } from '../lib/promo-types.js';
 
@@ -25,7 +27,10 @@ export function PromoProvider({ children }) {
   }, [refresh]);
 
   const value = useMemo(() => {
-    const getDisplayPrice = (unitPrice) => calcDisplayUnitPrice(unitPrice, promos);
+    const getDisplayPrice = (unitPrice, cartSubtotal) =>
+      calcDisplayUnitPrice(unitPrice, promos, {
+        cartSubtotal: cartSubtotal ?? undefined,
+      });
     const getOrderTotals = (subtotal, shippingFee, paymentMethod) =>
       calcPromoTotals(subtotal, shippingFee, promos, { paymentMethod });
 
@@ -41,8 +46,11 @@ export function PromoProvider({ children }) {
         PROMO_TYPES.SPECIAL_DISCOUNT
       ),
       hasFreeShippingPromo: hasActivePromoType(promos, PROMO_TYPES.FREE_SHIPPING),
+      hasCodDiscountPromo: hasActivePromoType(promos, PROMO_TYPES.COD_DISCOUNT),
+      hasSpecialDiscountPromo: hasActivePromoType(promos, PROMO_TYPES.SPECIAL_DISCOUNT),
       getDisplayPrice,
       getOrderTotals,
+      resolvePdpPrice: (unitPrice) => resolvePdpPrice(unitPrice, promos),
     };
   }, [promos, loading, refresh, couponCode]);
 
@@ -55,14 +63,26 @@ export function usePromo() {
   return ctx;
 }
 
-export function useDisplayPrice(unitPrice) {
-  const { getDisplayPrice, hasProductDiscount } = usePromo();
+export function useDisplayPrice(unitPrice, { useCartSubtotal = false } = {}) {
+  const { getDisplayPrice, hasProductDiscount, resolvePdpPrice: resolvePrice } = usePromo();
+  const { subtotal } = useCart();
   const base = Number(unitPrice) || 0;
-  const display = getDisplayPrice(base);
+  if (!useCartSubtotal) {
+    const pdp = resolvePrice(base);
+    return {
+      basePrice: pdp.basePrice,
+      displayPrice: pdp.displayPrice,
+      hasDiscount: pdp.hasDiscount,
+      minOrderHint: pdp.minOrderHint,
+    };
+  }
+  const cartSubtotal = useCartSubtotal ? subtotal : undefined;
+  const display = getDisplayPrice(base, cartSubtotal);
   return {
     basePrice: base,
     displayPrice: display,
     hasDiscount: hasProductDiscount && display < base,
+    minOrderHint: null,
   };
 }
 

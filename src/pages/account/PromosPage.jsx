@@ -3,7 +3,23 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { shopApi } from '../../lib/shop-api.js';
 import { formatPromoDiscount, formatPromoPeriod } from '../../lib/promo-display.js';
+import { fmtTHB } from '../../lib/money.js';
 import { PROMO_TYPE_LABELS } from '../../lib/promo-types.js';
+
+function promoUsageHint(promo) {
+  if (promo.distribution === 'broadcast') {
+    const minOrder = Number(promo.min_order) || 0;
+    if (minOrder > 0) {
+      return { status: 'min_order', text: `ใช้ได้เมื่อยอดถึง ${fmtTHB(minOrder)}` };
+    }
+    return { status: 'auto', text: 'ใช้อัตโนมัติแล้ว' };
+  }
+  const minOrder = Number(promo.min_order) || 0;
+  if (minOrder > 0) {
+    return { status: 'min_order', text: `ใช้ได้เมื่อยอดถึง ${fmtTHB(minOrder)}` };
+  }
+  return { status: 'auto', text: 'ใช้อัตโนมัติแล้ว' };
+}
 
 export default function PromosPage() {
   const { user } = useAuth();
@@ -38,7 +54,9 @@ export default function PromosPage() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {promos.map((promo) => (
+          {promos.map((promo) => {
+            const hint = promoUsageHint(promo);
+            return (
             <li key={promo.id} className="card-canvas p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -51,6 +69,7 @@ export default function PromosPage() {
                   </span>
                   <h2 className="mt-1 font-display text-lg text-ink">{promo.display_name}</h2>
                   <p className="text-sm font-semibold text-primary">{formatPromoDiscount(promo)}</p>
+                  <p className="mt-1 text-xs text-primary">{hint.text}</p>
                   <p className="mt-1 text-xs text-muted">{PROMO_TYPE_LABELS[promo.promo_type]}</p>
                   {(promo.public_code || promo.internal_code) && (
                     <div className="mt-2 flex items-center gap-2">
@@ -69,8 +88,14 @@ export default function PromosPage() {
                 </div>
               </div>
               <p className="mt-2 text-xs text-muted">{formatPromoPeriod(promo)}</p>
+              {hint.status === 'min_order' && promo.status === 'active' && (
+                <Link to="/cart" className="mt-2 inline-block text-sm text-primary underline">
+                  ไปที่ตะกร้า
+                </Link>
+              )}
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>

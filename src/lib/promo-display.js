@@ -10,6 +10,33 @@ export function formatPromoDiscount(promo) {
   return `ลด ${fmtTHB(promo.discount_value)}`;
 }
 
+function normalizePromoText(text) {
+  return String(text || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '');
+}
+
+/** True when display_name repeats the discount headline. */
+export function isRedundantPromoName(promo, value = formatPromoDiscount(promo)) {
+  const name = normalizePromoText(promo?.display_name);
+  const headline = normalizePromoText(value);
+  if (!name || !headline) return true;
+  return name === headline || name.includes(headline) || headline.includes(name);
+}
+
+/** One short context line for coupon tickets — min order and/or distinct name. */
+export function formatCouponTicketSubtitle(promo, value = formatPromoDiscount(promo)) {
+  const parts = [];
+  const minOrder = Number(promo?.min_order) || 0;
+  if (minOrder > 0) parts.push(`ขั้นต่ำ ${minOrder.toLocaleString('th-TH')}`);
+
+  const name = String(promo?.display_name || '').trim();
+  if (name && !isRedundantPromoName(promo, value)) parts.push(name);
+
+  return parts.length ? parts.join(' · ') : null;
+}
+
 export function formatPromoPeriod(promo) {
   if (!promo.starts_at && !promo.expires_at) return 'ไม่มีวันหมดอายุ';
   const start = promo.starts_at

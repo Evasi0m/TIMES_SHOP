@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -7,6 +7,7 @@ import { usePromo } from '../context/PromoContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { shopApi } from '../lib/shop-api.js';
 import { fmtTHB } from '../lib/money.js';
+import { getUnappliedPromoHints } from '../lib/pricing-policy.js';
 import { getSkuDisplayName } from '../lib/product-display.js';
 import { mapError } from '../lib/error-map.js';
 import EmptyState from '../components/EmptyState.jsx';
@@ -34,7 +35,7 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const isGuest = !user;
   const { shippingFee, shippingLabel } = useShipping();
-  const { couponCode, getOrderTotals } = usePromo();
+  const { couponCode, getOrderTotals, promos } = usePromo();
   const [paymentMethod, setPaymentMethod] = useState('');
   const clientTotals = getOrderTotals(subtotal, shippingFee, paymentMethod);
   const [serverQuote, setServerQuote] = useState(null);
@@ -44,6 +45,7 @@ export default function CheckoutPage() {
     shippingBase: shippingFee,
     breakdown: serverQuote.breakdown || [],
     grandTotal: serverQuote.grand_total,
+    discount: serverQuote.discount ?? 0,
     appliedPromoIds: serverQuote.applied_promo_ids || [],
     hasFreeShipping: serverQuote.shipping_fee === 0 && shippingFee > 0,
   } : clientTotals;
@@ -59,13 +61,21 @@ export default function CheckoutPage() {
   const [slipFile, setSlipFile] = useState(null);
   const [slipPath, setSlipPath] = useState(null);
   const [slipStatus, setSlipStatus] = useState(null);
+  const [slipVerifiedAmount, setSlipVerifiedAmount] = useState(null);
 
   const [validationIssues, setValidationIssues] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [guestBenefitsOpen, setGuestBenefitsOpen] = useState(false);
+  const [totalHighlight, setTotalHighlight] = useState(false);
+  const prevPaymentRef = useRef('');
 
   const idempotencyKey = useMemo(() => crypto.randomUUID(), []);
   const orderTotal = orderTotals.grandTotal;
+  const unappliedHints = getUnappliedPromoHints(
+    promos,
+    orderTotals.subtotal,
+    orderTotals.breakdown
+  );
 
   useEffect(() => {
     if (!items.length) return;
@@ -85,6 +95,28 @@ export default function CheckoutPage() {
     });
     return () => { active = false; };
   }, [items, paymentMethod, shippingFee, couponCode, user?.id]);
+
+  useEffect(() => {
+    if (!paymentMethod) return;
+    if (prevPaymentRef.current && prevPaymentRef.current !== paymentMethod) {
+      setTotalHighlight(true);
+      const t = setTimeout(() => setTotalHighlight(false), 2000);
+      prevPaymentRef.current = paymentMethod;
+      return () => clearTimeout(t);
+    }
+    prevPaymentRef.current = paymentMethod;
+  }, [paymentMethod]);
+
+  useEffect(() => {
+    if (slipVerifiedAmount == null) return;
+    if (orderTotal !== slipVerifiedAmount) {
+      setSlipFile(null);
+      setSlipPath(null);
+      setSlipStatus(null);
+      setSlipVerifiedAmount(null);
+      toast.error('ยอดเปลี่ยน กรุณาอัปโหลดสลิปใหม่');
+    }
+  }, [orderTotal, slipVerifiedAmount, toast]);
 
   useEffect(() => {
     if (isGuest && !isGuestBenefitsDismissed()) {
@@ -153,7 +185,8 @@ export default function CheckoutPage() {
       });
       if (!verify.ok) throw new Error(verify.error);
       setSlipPath(up.storage_path);
-      setSlipStatus(verify.status); // pending_review
+      setSlipStatus(verify.status);
+      setSlipVerifiedAmount(orderTotal);
       toast.success(verify.message || 'อัปโหลดสลิปสำเร็จ');
     } catch (err) {
       setSlipFile(null);
@@ -181,6 +214,15 @@ export default function CheckoutPage() {
     }
     if (paymentMethod === 'transfer' && !slipPath) {
       toast.error('กรุณาแนบสลิปการโอนเงิน');
+      return;
+    }
+    if (
+      paymentMethod === 'transfer' &&
+      slipPath &&
+      slipVerifiedAmount != null &&
+      slipVerifiedAmount !== orderTotal
+    ) {
+      toast.error('ยอดสลิปไม่ตรงกับยอดปัจจุบัน กรุณาอัปโหลดสลิปใหม่');
       return;
     }
 
@@ -417,6 +459,19 @@ export default function CheckoutPage() {
               </p>
             </BannerAlert>
           )}
+          {unappliedHints.length > 0 && (
+            <BannerAlert variant="info">
+              <p className="font-semibold text-ink">โปรที่ยังไม่ถูกใช้</p>
+              <ul className="mt-2 space-y-1 text-sm">
+                {unappliedHints.map((hint) => (
+                  <li key={hint.id}>{hint.message}</li>
+                ))}
+              </ul>
+              <Link to="/cart" className="mt-2 inline-block text-sm text-primary underline">
+                กลับไปตะกร้าเพื่อเพิ่มสินค้า
+              </Link>
+            </BannerAlert>
+          )}
         </div>
 
         <OrderSummaryCard
@@ -426,7 +481,9 @@ export default function CheckoutPage() {
           shippingBase={orderTotals.shippingBase}
           shippingLabel={orderTotals.hasFreeShipping ? 'ส่งฟรี' : shippingLabel}
           promoBreakdown={orderTotals.breakdown}
+          discount={orderTotals.discount}
           grandTotal={orderTotals.grandTotal}
+          totalHighlight={totalHighlight}
           itemLines={items.map((i) => ({
             key: i.tiktok_sku_id,
             label: `${getSkuDisplayName(i)} × ${i.quantity}`,

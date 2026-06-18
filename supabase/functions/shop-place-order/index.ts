@@ -89,5 +89,37 @@ Deno.serve(async (req) => {
     );
   }
 
+  if (placed?.ok && placed.order_id && !customerUserId) {
+    const phone = String((payload.shipping as Record<string, unknown>)?.phone ?? '').replace(/\D/g, '');
+    const last4 = phone.slice(-4);
+    const orderId = Number(placed.order_id);
+    const webOrderNumber = String(placed.web_order_number ?? '');
+    if (last4.length === 4 && webOrderNumber) {
+      const phoneHash = await hashGuestPhone(last4, orderId);
+      const lookupToken = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+      const { error: guestErr } = await db.from('shop_guest_order_access').insert({
+        order_id: orderId,
+        web_order_number: webOrderNumber,
+        phone_hash: phoneHash,
+        lookup_token: lookupToken,
+        expires_at: expiresAt,
+      });
+      if (!guestErr) {
+        placed.guest_lookup_token = lookupToken;
+      } else {
+        console.error('shop_guest_order_access insert failed:', guestErr.message);
+      }
+    }
+  }
+
   return jsonResponse(placed);
 });
+
+async function hashGuestPhone(last4: string, orderId: number): Promise<string> {
+  const data = new TextEncoder().encode(`${last4}:${orderId}`);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}

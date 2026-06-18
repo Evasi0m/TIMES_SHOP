@@ -27,10 +27,6 @@
   }
 }
 
-.btn-quick-add:active:not(:disabled) {
-  transform: scale(0.96);
-}
-
 .product-card__body {
   display: flex;
   flex-direction: column;
@@ -136,6 +132,18 @@
   width: 14px;
   height: 14px;
   flex-shrink: 0;
+}
+
+.product-image-promos__icon--white {
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.product-image-promos__icon--discount-tint {
+  object-fit: contain;
+  /* tint black PNG → badge discount color (#ee4d2d) */
+  filter: brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(2068%) hue-rotate(346deg)
+    brightness(97%) contrast(92%);
 }
 
 .badge-casio {

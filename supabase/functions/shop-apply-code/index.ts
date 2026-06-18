@@ -1,7 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createServiceClient, getUser } from '../_shared/auth.ts';
 import { handleOptions, jsonResponse, readJson } from '../_shared/http.ts';
-import { findPromoByCode } from '../_shared/promo-resolve.ts';
+import { findPromoByCode, isPromoWithinPerUserLimit } from '../_shared/promo-resolve.ts';
 import { isPromoActive, toClientPromo } from '../_shared/promo.ts';
 
 Deno.serve(async (req) => {
@@ -24,7 +24,25 @@ Deno.serve(async (req) => {
   }
 
   if (!isPromoActive(promo)) {
-    return jsonResponse({ ok: false, error: 'expired', message: 'โค้ดนี้หมดอายุหรือใช้ครบแล้ว' });
+    const now = Date.now();
+    const expired = promo.expires_at && new Date(promo.expires_at).getTime() < now;
+    const exhausted = promo.max_uses != null && Number(promo.used_count) >= Number(promo.max_uses);
+    if (expired) {
+      return jsonResponse({ ok: false, error: 'expired', message: 'โค้ดนี้หมดอายุแล้ว' });
+    }
+    if (exhausted) {
+      return jsonResponse({ ok: false, error: 'exhausted', message: 'โค้ดนี้ถูกใช้ครบจำนวนแล้ว' });
+    }
+    return jsonResponse({ ok: false, error: 'inactive', message: 'โค้ดนี้ยังไม่เปิดใช้งาน' });
+  }
+
+  const withinLimit = await isPromoWithinPerUserLimit(db, promo, userId);
+  if (!withinLimit) {
+    return jsonResponse({
+      ok: false,
+      error: 'per_user_limit',
+      message: 'คุณใช้โค้ดนี้ครบจำนวนที่กำหนดแล้ว',
+    });
   }
 
   const entryEnabled = (promo as { code_entry_enabled?: boolean }).code_entry_enabled;

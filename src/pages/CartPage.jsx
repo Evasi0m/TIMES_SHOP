@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
 import { useShipping } from '../context/ShippingContext.jsx';
 import { useOrderTotals } from '../context/PromoContext.jsx';
+import { PRICE_DISCLAIMER } from '../lib/pricing-policy.js';
 import { getSkuDisplayName } from '../lib/product-display.js';
 import { fmtTHB } from '../lib/money.js';
 import EmptyState from '../components/EmptyState.jsx';
@@ -56,14 +57,14 @@ export default function CartPage() {
           shippingFee={orderTotals.shippingFee}
           shippingBase={orderTotals.shippingBase}
           shippingLabel={orderTotals.hasFreeShipping ? 'ส่งฟรี' : shippingLabel}
-          promoBreakdown={orderTotals.breakdown.filter(
-            (b) => b.promo_type !== 'free_shipping' && b.promo_type !== 'cod_discount'
-          )}
+          promoBreakdown={orderTotals.breakdown.filter((b) => b.promo_type !== 'cod_discount')}
+          discount={orderTotals.discount}
           grandTotal={orderTotals.grandTotal}
           itemLines={itemLines}
           submitLabel="ดำเนินการชำระเงิน"
           onSubmit={() => navigate('/checkout')}
           promoCodeSlot={<PromoCodeInput />}
+          disclaimer={PRICE_DISCLAIMER}
           extraAction={
             <Link to="/catalog" className="btn-ghost w-full">
               เลือกซื้อสินค้าเพิ่ม

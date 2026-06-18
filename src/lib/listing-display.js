@@ -10,6 +10,22 @@ export function getListingCardImage(item) {
   return item.listing_image_url || item.image_url || null;
 }
 
+/** Prefer listing cover over default SKU image for catalog cards. */
+export function normalizeListingItem(item) {
+  if (!item) return item;
+  if (!isListingCard(item)) return item;
+  const cover = getListingCardImage(item);
+  return {
+    ...item,
+    image_url: cover,
+    listing_image_url: cover || item.listing_image_url,
+  };
+}
+
+export function normalizeListingItems(items = []) {
+  return items.map(normalizeListingItem);
+}
+
 export function getListingProductLink(item) {
   if (item?.tiktok_product_id) {
     const sku = item.default_sku_id || item.tiktok_sku_id;

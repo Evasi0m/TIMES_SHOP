@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import AdminFormSection from '../../components/admin/AdminFormSection.jsx';
+import { useNavigate, useParams } from 'react-router-dom';
 import AdminPageShell from '../../components/admin/AdminPageShell.jsx';
+import PromoEditorForm from '../../components/admin/promo-vault/PromoEditorForm.jsx';
+import PromoEditorPreview from '../../components/admin/promo-vault/PromoEditorPreview.jsx';
 import { Skeleton } from '../../components/Skeleton.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { shopApi } from '../../lib/shop-api.js';
 import { mapError } from '../../lib/error-map.js';
 import {
   DISCOUNT_MODES,
-  PROMO_TYPE_DESCRIPTIONS,
-  PROMO_TYPE_LABELS,
-  PROMO_TYPE_LIST,
   PROMO_TYPES,
 } from '../../lib/promo-types.js';
 
@@ -24,6 +22,7 @@ const EMPTY = {
   expires_at: '',
   no_expiry: true,
   max_uses: '',
+  max_uses_per_user: '',
   is_active: true,
   public_code: '',
   code_entry_enabled: false,
@@ -49,6 +48,7 @@ export default function AdminPromoEditorPage() {
           expires_at: promo.expires_at ? promo.expires_at.slice(0, 16) : '',
           no_expiry: !promo.expires_at,
           max_uses: promo.max_uses ?? '',
+          max_uses_per_user: promo.max_uses_per_user ?? '',
         });
       }
       setLoading(false);
@@ -61,6 +61,27 @@ export default function AdminPromoEditorPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    if (!form.display_name.trim()) {
+      toast.error('กรุณากรอกชื่อที่ลูกค้าเห็น');
+      return;
+    }
+    if (form.code_entry_enabled && !String(form.public_code || '').trim()) {
+      toast.error('เปิดกรอกโค้ดต้องระบุโค้ดสาธารณะ');
+      return;
+    }
+    if (form.promo_type !== PROMO_TYPES.FREE_SHIPPING) {
+      const value = Number(form.discount_value) || 0;
+      if (value <= 0) {
+        toast.error('กรุณาระบุมูลค่าส่วนลดมากกว่า 0');
+        return;
+      }
+      if (form.discount_mode === DISCOUNT_MODES.PERCENT && (value <= 0 || value > 100)) {
+        toast.error('ส่วนลดเปอร์เซ็นต์ต้องอยู่ระหว่าง 1–100');
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const payload = {
@@ -83,8 +104,6 @@ export default function AdminPromoEditorPage() {
     }
   }
 
-  const isFreeShipping = form.promo_type === PROMO_TYPES.FREE_SHIPPING;
-
   if (loading) {
     return (
       <AdminPageShell
@@ -92,10 +111,12 @@ export default function AdminPromoEditorPage() {
         backTo="/admin/promos"
         backLabel="← กลับคลังโปร"
       >
-        <div className="admin-card admin-card--pad space-y-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-2/3" />
+        <div className="promo-editor mt-6">
+          <div className="admin-card admin-card--pad space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-2/3" />
+          </div>
         </div>
       </AdminPageShell>
     );
@@ -108,171 +129,17 @@ export default function AdminPromoEditorPage() {
       backTo="/admin/promos"
       backLabel="← กลับคลังโปร"
     >
-      <form onSubmit={handleSubmit} className="admin-card admin-card--pad mt-6">
-        <AdminFormSection
-          title="ข้อมูลพื้นฐาน"
-          description="ชื่อที่ลูกค้าเห็นและประเภทโปร"
-        >
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-body-strong">
-              ชื่อที่ลูกค้าเห็น *
-            </label>
-            <input
-              value={form.display_name}
-              onChange={(e) => update('display_name', e.target.value)}
-              className="input"
-              placeholder="เช่น ลด 10% สินค้า"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-body-strong">ประเภทโปร *</label>
-            <select
-              value={form.promo_type}
-              onChange={(e) => update('promo_type', e.target.value)}
-              className="input"
-            >
-              {PROMO_TYPE_LIST.map((type) => (
-                <option key={type} value={type}>
-                  {PROMO_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-muted">{PROMO_TYPE_DESCRIPTIONS[form.promo_type]}</p>
-          </div>
-        </AdminFormSection>
-
-        <AdminFormSection
-          title="โค้ดสำหรับลูกค้ากรอก"
-          description="เปิดใช้เมื่อต้องการให้ลูกค้ากรอกโค้ดตอน checkout"
-        >
-          <label className="flex min-h-[44px] items-center gap-2 text-sm text-body">
-            <input
-              type="checkbox"
-              checked={form.code_entry_enabled}
-              onChange={(e) => update('code_entry_enabled', e.target.checked)}
-            />
-            ให้ลูกค้ากรอกโค้ดได้
-          </label>
-          {form.code_entry_enabled && (
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-body-strong">
-                โค้ดสาธารณะ (public code)
-              </label>
-              <input
-                value={form.public_code || ''}
-                onChange={(e) => update('public_code', e.target.value.toUpperCase())}
-                className="input uppercase"
-                placeholder="เช่น SUMMER10"
-              />
-            </div>
-          )}
-        </AdminFormSection>
-
-        {!isFreeShipping && (
-          <AdminFormSection
-            title="เงื่อนไขส่วนลด"
-            description="รูปแบบและมูลค่าส่วนลด รวมถึงยอดสั่งซื้อขั้นต่ำ"
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-body-strong">
-                  รูปแบบส่วนลด
-                </label>
-                <select
-                  value={form.discount_mode}
-                  onChange={(e) => update('discount_mode', e.target.value)}
-                  className="input"
-                >
-                  <option value={DISCOUNT_MODES.PERCENT}>เปอร์เซ็นต์ (%)</option>
-                  <option value={DISCOUNT_MODES.AMOUNT}>จำนวนเงิน (บาท)</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-body-strong">มูลค่าส่วนลด</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="any"
-                  value={form.discount_value}
-                  onChange={(e) => update('discount_value', e.target.value)}
-                  className="input"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-body-strong">
-                ยอดสั่งซื้อขั้นต่ำ (บาท)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={form.min_order}
-                onChange={(e) => update('min_order', e.target.value)}
-                className="input"
-              />
-            </div>
-          </AdminFormSection>
-        )}
-
-        <AdminFormSection
-          title="ระยะเวลาและข้อจำกัด"
-          description="กำหนดช่วงใช้งานและจำนวนครั้งที่ใช้ได้"
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-body-strong">เริ่มใช้</label>
-              <input
-                type="datetime-local"
-                value={form.starts_at}
-                onChange={(e) => update('starts_at', e.target.value)}
-                className="input"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-body-strong">หมดอายุ</label>
-              <input
-                type="datetime-local"
-                value={form.expires_at}
-                onChange={(e) => update('expires_at', e.target.value)}
-                className="input"
-                disabled={form.no_expiry}
-              />
-              <label className="mt-2 flex min-h-[44px] items-center gap-2 text-sm text-body">
-                <input
-                  type="checkbox"
-                  checked={form.no_expiry}
-                  onChange={(e) => update('no_expiry', e.target.checked)}
-                />
-                ไม่มีวันหมดอายุ
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-body-strong">
-              จำกัดจำนวนครั้ง (ว่าง = ไม่จำกัด)
-            </label>
-            <input
-              type="number"
-              min="1"
-              value={form.max_uses}
-              onChange={(e) => update('max_uses', e.target.value)}
-              className="input"
-            />
-          </div>
-        </AdminFormSection>
-
-        <div className="admin-form-footer">
-          <Link to="/admin/promos" className="btn-admin-secondary min-h-[44px] flex-1">
-            ยกเลิก
-          </Link>
-          <button type="submit" disabled={saving} className="btn-admin-primary min-h-[44px] flex-1">
-            {saving ? 'กำลังบันทึก...' : 'บันทึกแบบร่าง'}
-          </button>
+      <div className="promo-editor mt-6">
+        <div className="promo-editor__aside lg:order-2">
+          <PromoEditorPreview form={form} />
         </div>
-      </form>
+        <PromoEditorForm
+          form={form}
+          update={update}
+          onSubmit={handleSubmit}
+          saving={saving}
+        />
+      </div>
     </AdminPageShell>
   );
 }

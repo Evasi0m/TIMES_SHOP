@@ -21,6 +21,7 @@ import VariantBuySheet from '../components/product/VariantBuySheet.jsx';
 import { trackRecentlyViewed, getRecentlyViewed } from '../hooks/useRecentlyViewed.js';
 import { buildViewSnapshot, shouldTrackProductView } from '../lib/homepage.js';
 import { isHtmlDescription } from '../lib/product-description.js';
+import ProductDescriptionCard from '../components/product/ProductDescriptionCard.jsx';
 import PromoPriceDisplay from '../components/PromoPriceDisplay.jsx';
 import BannerAlert from '../components/ui/BannerAlert.jsx';
 import { Skeleton } from '../components/Skeleton.jsx';
@@ -381,16 +382,10 @@ export default function ProductPage() {
               <Skeleton className="h-4 w-2/3" />
             </div>
           ) : description ? (
-            isHtmlDescription(description) ? (
-              <div
-                className="card-canvas pdp-description-html p-4 text-sm leading-relaxed text-body"
-                dangerouslySetInnerHTML={{ __html: description }}
-              />
-            ) : (
-              <div className="card-canvas whitespace-pre-wrap p-4 text-sm leading-relaxed text-body">
-                {description}
-              </div>
-            )
+            <ProductDescriptionCard
+              description={description}
+              html={isHtmlDescription(description)}
+            />
           ) : (
             <div className="card-canvas p-6 text-center text-sm text-muted">
               ยังไม่มีคำอธิบายสินค้า

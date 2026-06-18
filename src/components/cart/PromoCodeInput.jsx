@@ -23,7 +23,8 @@ export default function PromoCodeInput({ className = '' }) {
     try {
       const res = await shopApi.applyPromoCode({ code, user_id: user?.id });
       if (!res.ok) {
-        toast.error(mapError(res));
+        const msg = mapError(res);
+        toast.error(msg);
         return;
       }
       setCouponCode(code);

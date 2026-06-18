@@ -60,19 +60,24 @@ export async function resolveTikTokCredentials(): Promise<TikTokCredentials | nu
 
 export async function isTikTokConfigured(): Promise<boolean> {
   if (await resolveTikTokCredentials()) return true;
-  return Boolean(Deno.env.get('POS_SERVICE_ROLE_KEY'));
+  return Boolean(
+    (Deno.env.get('SHOP_POS_BRIDGE_SECRET') || '').trim()
+    || (Deno.env.get('POS_SERVICE_ROLE_KEY') || '').trim(),
+  );
 }
 
 async function fetchViaPosBridge(productId: string): Promise<string | null> {
   const posUrl = Deno.env.get('POS_SUPABASE_URL') || 'https://zrymhhkqdcttqsdczfcr.supabase.co';
-  const posKey = Deno.env.get('POS_SERVICE_ROLE_KEY') || '';
-  if (!posKey) return null;
+  const bridgeSecret = (Deno.env.get('SHOP_POS_BRIDGE_SECRET') || '').trim();
+  const posKey = (Deno.env.get('POS_SERVICE_ROLE_KEY') || '').trim();
+  const authKey = bridgeSecret || posKey;
+  if (!authKey) return null;
 
   const res = await fetch(`${posUrl}/functions/v1/shop-get-tiktok-description`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${posKey}`,
-      apikey: posKey,
+      Authorization: `Bearer ${authKey}`,
+      apikey: authKey,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ tiktok_product_id: productId }),
@@ -162,15 +167,27 @@ async function fetchDirectFromTikTok(productId: string, creds: TikTokCredentials
 
 /** Fetch raw description text — POS bridge first, then direct TikTok if configured. */
 export async function fetchTikTokProductDescription(productId: string): Promise<string | null> {
-  if (Deno.env.get('POS_SERVICE_ROLE_KEY')) {
+  let bridgeError: Error | null = null;
+
+  if ((Deno.env.get('SHOP_POS_BRIDGE_SECRET') || '').trim() || (Deno.env.get('POS_SERVICE_ROLE_KEY') || '').trim()) {
     try {
-      return await fetchViaPosBridge(productId);
-    } catch {
-      /* fall through to direct credentials if any */
+      const fromBridge = await fetchViaPosBridge(productId);
+      if (fromBridge) return fromBridge;
+    } catch (e) {
+      bridgeError = e instanceof Error ? e : new Error(String(e));
     }
   }
 
   const creds = await resolveTikTokCredentials();
-  if (!creds) return null;
-  return fetchDirectFromTikTok(productId, creds);
+  if (creds) {
+    try {
+      return await fetchDirectFromTikTok(productId, creds);
+    } catch (e) {
+      if (bridgeError) throw bridgeError;
+      throw e instanceof Error ? e : new Error(String(e));
+    }
+  }
+
+  if (bridgeError) throw bridgeError;
+  return null;
 }

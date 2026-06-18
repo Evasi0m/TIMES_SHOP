@@ -20,6 +20,12 @@ export default function OrderSuccessPage() {
   const [order, setOrder] = useState(passed || null);
   const [loading, setLoading] = useState(!passed && !isGuest);
   const [cancelling, setCancelling] = useState(false);
+  const [promosRestored, setPromosRestored] = useState(false);
+
+  const guestTrackToken = passed?.guest_lookup_token;
+  const guestTrackUrl = guestTrackToken
+    ? `${window.location.origin}/order/track?token=${encodeURIComponent(guestTrackToken)}`
+    : null;
 
   useEffect(() => {
     if (passed || isGuest) return;
@@ -44,6 +50,7 @@ export default function OrderSuccessPage() {
         return;
       }
       toast.success('ยกเลิกออเดอร์แล้ว');
+      setPromosRestored(Boolean(res.promos_restored));
       setOrder((o) => (o ? { ...o, status: 'voided', status_label: 'ยกเลิก' } : o));
     } finally {
       setCancelling(false);
@@ -113,6 +120,22 @@ export default function OrderSuccessPage() {
           </p>
         )}
       </div>
+
+      {isGuest && guestTrackUrl && (
+        <div className="motion-slide-up card-cream space-y-2 p-4 text-left text-sm" style={{ animationDelay: '100ms' }}>
+          <p className="font-semibold text-ink">ติดตามออเดอร์ (แขก)</p>
+          <p className="text-body">
+            เก็บลิงก์นี้หรือ screenshot ไว้ — ใช้ตรวจสอบสถานะโดยไม่ต้องสมัครสมาชิก
+          </p>
+          <Link to={`/order/track?token=${encodeURIComponent(guestTrackToken)}`} className="break-all text-primary underline">
+            {guestTrackUrl}
+          </Link>
+        </div>
+      )}
+
+      {promosRestored && (
+        <p className="text-sm text-success">สิทธิ์โปรที่ใช้กับออเดอร์นี้ถูกคืนแล้ว</p>
+      )}
 
       <div className="motion-slide-up flex flex-col gap-2" style={{ animationDelay: '120ms' }}>
         {canCancel && (

@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import AppUpdateBanner from '../AppUpdateBanner.jsx';
 import ShopHeader from './ShopHeader.jsx';
+import AnnouncementBar from './AnnouncementBar.jsx';
 import BottomTabBar from './BottomTabBar.jsx';
 import PageTransition from '../motion/PageTransition.jsx';
 import { useAppUpdateCheck } from '../../hooks/useAppUpdateCheck.js';
@@ -33,6 +34,7 @@ export default function ShopLayout() {
   return (
     <div className="flex min-h-full flex-col bg-canvas font-sans">
       <ShopHeader />
+      <AnnouncementBar />
       <AppUpdateBanner visible={updateAvailable} onReload={reload} />
       <main className={mainClass}>
         <PageTransition>

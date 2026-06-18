@@ -1,4 +1,5 @@
 import { fmtTHB } from '../../lib/money.js';
+import { calcTotalSavings } from '../../lib/pricing-policy.js';
 import ShopButton from '../ui/ShopButton.jsx';
 
 export default function OrderSummaryCard({
@@ -8,6 +9,7 @@ export default function OrderSummaryCard({
   shippingBase,
   promoBreakdown = [],
   grandTotal,
+  discount,
   itemLines,
   submitLabel,
   onSubmit,
@@ -15,12 +17,15 @@ export default function OrderSummaryCard({
   submitType = 'button',
   extraAction,
   promoCodeSlot,
+  disclaimer,
+  totalHighlight = false,
   className = '',
 }) {
   const total = grandTotal ?? subtotal + shippingFee;
   const shippingText = shippingLabel ?? (shippingFee <= 0 ? 'ส่งฟรี' : fmtTHB(shippingFee));
   const showShippingStrike =
     shippingBase != null && shippingBase > shippingFee && shippingFee === 0;
+  const savings = calcTotalSavings({ discount: discount ?? promoBreakdown.reduce((s, l) => s + l.amount, 0) });
 
   return (
     <div className={`card-canvas space-y-3 p-4 lg:p-6 ${className}`.trim()}>
@@ -64,10 +69,19 @@ export default function OrderSummaryCard({
 
       {promoCodeSlot}
 
-      <div className="flex justify-between border-t border-hairline pt-3">
+      {savings > 0 && (
+        <div className="flex justify-between text-sm">
+          <span className="text-body">ประหยัดไป</span>
+          <span className="font-medium text-success">{fmtTHB(savings)}</span>
+        </div>
+      )}
+
+      <div className={`flex justify-between border-t border-hairline pt-3 ${totalHighlight ? 'promo-flash rounded-lg bg-canvas px-2 py-2' : ''}`}>
         <span className="font-semibold text-ink">รวมทั้งสิ้น</span>
         <span className="text-lg font-bold text-primary">{fmtTHB(total)}</span>
       </div>
+
+      {disclaimer && <p className="text-xs text-muted">{disclaimer}</p>}
 
       {submitLabel && (
         <ShopButton

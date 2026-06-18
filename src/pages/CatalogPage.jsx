@@ -14,6 +14,7 @@ import SortSelect from '../components/catalog/SortSelect.jsx';
 import ActiveFilterPills from '../components/catalog/ActiveFilterPills.jsx';
 import CatalogFilterSheet from '../components/catalog/CatalogFilterSheet.jsx';
 import { CATALOG_PAGE_SIZE, useCatalogFilters } from '../hooks/useCatalogFilters.js';
+import { normalizeListingItems } from '../lib/listing-display.js';
 
 export default function CatalogPage() {
   const {
@@ -57,7 +58,7 @@ export default function CatalogPage() {
     shopApi.getCatalog(apiParams).then((res) => {
       if (!active) return;
       if (res.ok) {
-        setData({ items: res.items, total: res.total });
+        setData({ items: normalizeListingItems(res.items), total: res.total });
         setError(null);
       } else {
         setError(res.message || res.error || 'โหลดสินค้าไม่สำเร็จ');

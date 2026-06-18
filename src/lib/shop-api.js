@@ -215,6 +215,9 @@ export const shopApi = {
   cancelOrder(params) {
     return USE_MOCK_API ? mockApi.cancelOrder(params) : invokeShop('shop-cancel-order', params);
   },
+  guestOrderTrack(params) {
+    return USE_MOCK_API ? mockApi.guestOrderTrack(params) : invokeShop('shop-guest-order-track', params);
+  },
   adminDashboard() {
     return USE_MOCK_API ? mockApi.adminDashboard() : invokeShop('shop-admin-dashboard', {});
   },

@@ -1,6 +1,56 @@
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { isPromoActive, type PromoRow } from './promo.ts';
 
+/** Count non-reversed redemptions for a user + promo. */
+async function countUserPromoRedemptions(
+  db: SupabaseClient,
+  promoId: string,
+  userId: string,
+): Promise<number> {
+  const { count, error } = await db
+    .from('promo_redemptions')
+    .select('id', { count: 'exact', head: true })
+    .eq('promo_code_id', promoId)
+    .eq('user_id', userId)
+    .is('reversed_at', null);
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+/** Drop promos where the user has hit max_uses_per_user (guests skip this check). */
+export async function filterPromosByPerUserLimit(
+  db: SupabaseClient,
+  promos: PromoRow[],
+  userId: string | null,
+): Promise<PromoRow[]> {
+  if (!userId) return promos;
+
+  const result: PromoRow[] = [];
+  for (const promo of promos) {
+    const maxPerUser = (promo as PromoRow & { max_uses_per_user?: number | null }).max_uses_per_user;
+    if (maxPerUser == null) {
+      result.push(promo);
+      continue;
+    }
+    const used = await countUserPromoRedemptions(db, promo.id, userId);
+    if (used < maxPerUser) result.push(promo);
+  }
+  return result;
+}
+
+/** True if user may redeem this promo (per-user limit). Guests always pass. */
+export async function isPromoWithinPerUserLimit(
+  db: SupabaseClient,
+  promo: PromoRow,
+  userId: string | null,
+): Promise<boolean> {
+  if (!userId) return true;
+  const maxPerUser = (promo as PromoRow & { max_uses_per_user?: number | null }).max_uses_per_user;
+  if (maxPerUser == null) return true;
+  const used = await countUserPromoRedemptions(db, promo.id, userId);
+  return used < maxPerUser;
+}
+
 /** Load promos eligible for a user (broadcast + targeted grants). */
 export async function loadEligiblePromos(
   db: SupabaseClient,
@@ -29,7 +79,7 @@ export async function loadEligiblePromos(
     }
   }
 
-  return result;
+  return filterPromosByPerUserLimit(db, result, userId);
 }
 
 /** Resolve promos by explicit IDs (must be active + user eligible). */

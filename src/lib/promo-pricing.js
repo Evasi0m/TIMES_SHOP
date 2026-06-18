@@ -140,9 +140,21 @@ export function calcPromoTotals(subtotal, baseShippingFee, promos, options = {})
   };
 }
 
-/** Display price for a single unit after product + special promos (excludes shipping/COD). */
-export function calcDisplayUnitPrice(unitPrice, promos) {
+/**
+ * Display price for a single unit after product + special promos (excludes shipping/COD).
+ * @param {number} unitPrice
+ * @param {object[]} promos
+ * @param {{ cartSubtotal?: number }} [options] — when set, min_order is checked against cart subtotal
+ */
+export function calcDisplayUnitPrice(unitPrice, promos, options = {}) {
   const base = roundMoney(unitPrice);
+  if (options.cartSubtotal != null) {
+    const cartSubtotal = roundMoney(options.cartSubtotal);
+    const totals = calcPromoTotals(cartSubtotal, 0, promos);
+    if (totals.discount <= 0 || cartSubtotal <= 0) return base;
+    const ratio = base / cartSubtotal;
+    return roundMoney(totals.discountedSubtotal * ratio);
+  }
   const { discountedSubtotal } = calcPromoTotals(base, 0, promos);
   return discountedSubtotal;
 }

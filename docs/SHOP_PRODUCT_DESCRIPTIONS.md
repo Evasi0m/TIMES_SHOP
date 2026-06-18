@@ -18,10 +18,13 @@
 | `TIKTOK_APP_SECRET` | yes | TikTok app secret (same as POS) |
 | `TIKTOK_ACCESS_TOKEN` | optional | ถ้าไม่ตั้ง จะอ่านจาก POS `tiktok_tokens` ผ่าน `POS_SERVICE_ROLE_KEY` |
 | `TIKTOK_SHOP_CIPHER` | optional | ถ้าไม่ตั้ง จะอ่านจาก POS `tiktok_tokens` |
-| `POS_SERVICE_ROLE_KEY` | yes | มีอยู่แล้ว — catalog bridge + token bridge |
+| `POS_SERVICE_ROLE_KEY` | yes* | catalog bridge + token bridge |
 | `POS_SUPABASE_URL` | optional | default `https://zrymhhkqdcttqsdczfcr.supabase.co` |
+| `SHOP_POS_BRIDGE_SECRET` | yes* | shared secret สำหรับ POS `shop-get-tiktok-description` (ตั้งค่าเดียวกันทั้ง Shop + POS) |
 
-**ขั้นต่ำ:** ไม่ต้องตั้ง TikTok secrets บน Shop — ระบบเรียก POS `shop-get-tiktok-description` ผ่าน `POS_SERVICE_ROLE_KEY` อัตโนมัติ
+**ขั้นต่ำ:** ตั้ง `SHOP_POS_BRIDGE_SECRET` ค่าเดียวกันบน Shop และ POS project — Shop เรียก POS `shop-get-tiktok-description` อัตโนมัติ (ไม่ต้อง copy POS service role JWT)
+
+\* ใช้อย่างใดอย่างหนึ่ง: `SHOP_POS_BRIDGE_SECRET` (แนะนำ) หรือ `POS_SERVICE_ROLE_KEY` = POS service role JWT
 
 ถ้าต้องการ bypass POS bridge สามารถตั้ง `TIKTOK_APP_KEY` + `TIKTOK_APP_SECRET` (+ token/cipher ถ้าต้องการ) บน Shop project ได้
 

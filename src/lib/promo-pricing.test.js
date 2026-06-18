@@ -115,6 +115,12 @@ describe('calcDisplayUnitPrice', () => {
     const promos = [basePromo({ discount_value: 10 })];
     expect(calcDisplayUnitPrice(1000, promos)).toBe(900);
   });
+
+  it('uses cart subtotal for min_order when provided', () => {
+    const promos = [basePromo({ min_order: 800, discount_value: 10 })];
+    expect(calcDisplayUnitPrice(400, promos)).toBe(400);
+    expect(calcDisplayUnitPrice(400, promos, { cartSubtotal: 800 })).toBe(360);
+  });
 });
 
 describe('filterActivePromos', () => {

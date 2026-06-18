@@ -648,6 +648,7 @@ export const mockApi = {
       discount: promoTotals.discount,
       grand_total: promoTotals.grandTotal,
       promo_breakdown: promoTotals.breakdown,
+      breakdown: promoTotals.breakdown,
       applied_promo_ids: promoTotals.appliedPromoIds,
       discounted_subtotal: promoTotals.discountedSubtotal,
       price_changed,
@@ -685,6 +686,8 @@ export const mockApi = {
     const ymd = now.toISOString().slice(0, 10).replace(/-/g, '');
     const web_order_number = `WEB-${ymd}-${String(orderId).slice(-4)}`;
 
+    const guestToken = isGuestOrder ? crypto.randomUUID() : null;
+
     const stored = {
       order_id: orderId,
       web_order_number,
@@ -695,6 +698,7 @@ export const mockApi = {
       payment_method: payload.payment_method,
       customer_user_id: customerUserId,
       is_guest: isGuestOrder,
+      guest_lookup_token: guestToken,
       shipping: {
         recipient_name: payload.shipping?.recipient_name,
         phone: payload.shipping?.phone,
@@ -731,6 +735,7 @@ export const mockApi = {
       status_label: 'รอยืนยัน',
       grand_total,
       payment_method: payload.payment_method,
+      guest_lookup_token: isGuestOrder ? guestToken : undefined,
       message: 'สั่งซื้อสำเร็จ ร้านจะยืนยันออเดอร์และแจ้งเมื่อจัดส่ง',
     };
   },
@@ -770,6 +775,13 @@ export const mockApi = {
     const announcement = getPublicAnnouncement();
     const profile_image_url = readClientProfileImageUrl();
     const cover_image_url = readClientCoverImageUrl();
+    let units_sold_display = null;
+    try {
+      const raw = localStorage.getItem('times_shop_units_sold_display');
+      if (raw != null && raw !== '') units_sold_display = Number(raw);
+    } catch {
+      /* ignore */
+    }
     // MVP: bank accounts may be empty until admin configures them.
     return {
       ok: true,
@@ -787,6 +799,7 @@ export const mockApi = {
       store: {
         profile_image_url,
         cover_image_url,
+        units_sold_display,
         name: 'TIMES STORE',
       },
     };
@@ -845,16 +858,24 @@ export const mockApi = {
   async adminGetShopSettings() {
     await delay();
     const { shipping_fee, shipping_label } = getMockShippingInfo();
+    let units_sold_display = null;
+    try {
+      const raw = localStorage.getItem('times_shop_units_sold_display');
+      if (raw != null && raw !== '') units_sold_display = Number(raw);
+    } catch {
+      /* ignore */
+    }
     return {
       ok: true,
       shipping_fee,
       shipping_label,
       profile_image_url: readClientProfileImageUrl(),
       cover_image_url: readClientCoverImageUrl(),
+      units_sold_display,
     };
   },
 
-  async adminUpdateShopSettings({ shipping_fee, profile_image_url, cover_image_url } = {}) {
+  async adminUpdateShopSettings({ shipping_fee, profile_image_url, cover_image_url, units_sold_display } = {}) {
     await delay();
     if (shipping_fee != null) {
       if (!Number.isFinite(Number(shipping_fee)) || Number(shipping_fee) < 0) {
@@ -894,12 +915,31 @@ export const mockApi = {
         writeClientCoverImageUrl(null);
       }
     }
+    if (units_sold_display !== undefined) {
+      if (units_sold_display == null || units_sold_display === '') {
+        localStorage.removeItem('times_shop_units_sold_display');
+      } else {
+        const n = Number(units_sold_display);
+        if (!Number.isFinite(n) || n < 0) {
+          return { ok: false, error: 'validation_failed', message: 'ยอดขายที่แสดงต้องเป็นตัวเลข 0 ขึ้นไป' };
+        }
+        localStorage.setItem('times_shop_units_sold_display', String(Math.floor(n)));
+      }
+    }
     const info = getMockShippingInfo();
+    let savedUnits = null;
+    try {
+      const raw = localStorage.getItem('times_shop_units_sold_display');
+      if (raw != null && raw !== '') savedUnits = Number(raw);
+    } catch {
+      /* ignore */
+    }
     return {
       ok: true,
       ...info,
       profile_image_url: readClientProfileImageUrl(),
       cover_image_url: readClientCoverImageUrl(),
+      units_sold_display: savedUnits,
     };
   },
 
@@ -1076,7 +1116,29 @@ export const mockApi = {
     }
     all[idx] = { ...all[idx], status: 'voided', status_label: 'ยกเลิก' };
     writeOrders(all);
-    return { ok: true, message: 'ยกเลิกออเดอร์แล้ว', status: 'voided' };
+    return { ok: true, message: 'ยกเลิกออเดอร์แล้ว', status: 'voided', promos_restored: false };
+  },
+
+  async guestOrderTrack({ token, web_order_number, phone } = {}) {
+    await delay();
+    const all = readOrders();
+    if (token) {
+      const order = all.find((o) => o.guest_lookup_token === token);
+      if (!order) return { ok: false, error: 'not_found', message: 'ไม่พบออเดอร์' };
+      return { ok: true, order };
+    }
+    const needle = String(web_order_number || '').trim().toLowerCase();
+    const last4 = String(phone || '').replace(/\D/g, '').slice(-4);
+    if (!needle || last4.length !== 4) {
+      return { ok: false, error: 'validation_failed', message: 'กรุณากรอกเลขออเดอร์และเบอร์โทร 4 หลักท้าย' };
+    }
+    const order = all.find(
+      (o) =>
+        String(o.web_order_number || '').toLowerCase() === needle &&
+        String(o.shipping?.phone || '').replace(/\D/g, '').slice(-4) === last4
+    );
+    if (!order) return { ok: false, error: 'not_found', message: 'ไม่พบออเดอร์หรือข้อมูลไม่ตรงกัน' };
+    return { ok: true, order };
   },
 
   async adminDashboard() {

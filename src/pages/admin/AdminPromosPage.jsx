@@ -1,27 +1,38 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminPageShell from '../../components/admin/AdminPageShell.jsx';
-import AdminStatGrid from '../../components/admin/AdminStatGrid.jsx';
-import PromoDistributeSheet from '../../components/admin/PromoDistributeSheet.jsx';
+import PromoVaultStats from '../../components/admin/promo-vault/PromoVaultStats.jsx';
+import {
+  PromoVaultMobileFilters,
+  PromoVaultSidebarFilters,
+} from '../../components/admin/promo-vault/PromoVaultFilters.jsx';
+import PromoVaultSearch from '../../components/admin/promo-vault/PromoVaultSearch.jsx';
+import PromoVaultCard from '../../components/admin/promo-vault/PromoVaultCard.jsx';
+import PromoVaultTable from '../../components/admin/promo-vault/PromoVaultTable.jsx';
+import PromoVaultEmpty from '../../components/admin/promo-vault/PromoVaultEmpty.jsx';
+import PromoVaultDistribute from '../../components/admin/promo-vault/PromoVaultDistribute.jsx';
 import { Skeleton } from '../../components/Skeleton.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { usePromo } from '../../context/PromoContext.jsx';
 import { shopApi } from '../../lib/shop-api.js';
 import { mapError } from '../../lib/error-map.js';
 import {
-  formatPromoDiscount,
-  formatPromoPeriod,
-  getStatusLabel,
-  statusBadgeClass,
-} from '../../lib/promo-display.js';
-import { PROMO_TYPE_LABELS, PROMO_TYPE_LIST } from '../../lib/promo-types.js';
+  filterPromos,
+  sortPromos,
+  VAULT_SORT_NEWEST,
+  VAULT_STATUS_ALL,
+  VAULT_TYPE_ALL,
+} from '../../lib/promo-vault.js';
 
 export default function AdminPromosPage() {
   const toast = useToast();
   const { refresh: refreshCustomerPromos } = usePromo();
   const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState('all');
+  const [statusFilter, setStatusFilter] = useState(VAULT_STATUS_ALL);
+  const [typeFilter, setTypeFilter] = useState(VAULT_TYPE_ALL);
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState(VAULT_SORT_NEWEST);
   const [distributePromo, setDistributePromo] = useState(null);
 
   const load = useCallback(async () => {
@@ -34,28 +45,19 @@ export default function AdminPromosPage() {
     load();
   }, [load]);
 
-  const stats = useMemo(() => {
-    const active = promos.filter((p) => p.status === 'active').length;
-    const inactive = promos.filter((p) => p.status === 'inactive').length;
-    return [
-      { label: 'โปรทั้งหมด', value: promos.length },
-      { label: 'ใช้งานอยู่', value: active, hint: active ? 'แสดงบนร้าน' : undefined },
-      { label: 'ปิดแล้ว', value: inactive },
-    ];
-  }, [promos]);
-
   const filtered = useMemo(() => {
-    if (filterType === 'all') return promos;
-    return promos.filter((p) => p.promo_type === filterType);
-  }, [promos, filterType]);
+    const list = filterPromos(promos, {
+      type: typeFilter,
+      status: statusFilter,
+      query,
+    });
+    return sortPromos(list, sort);
+  }, [promos, typeFilter, statusFilter, query, sort]);
 
-  const grouped = useMemo(() => {
-    const map = Object.fromEntries(PROMO_TYPE_LIST.map((t) => [t, []]));
-    for (const p of filtered) {
-      if (map[p.promo_type]) map[p.promo_type].push(p);
-    }
-    return map;
-  }, [filtered]);
+  const hasFilters =
+    statusFilter !== VAULT_STATUS_ALL ||
+    typeFilter !== VAULT_TYPE_ALL ||
+    query.trim().length > 0;
 
   async function handleRevoke(promo) {
     if (!window.confirm(`ปิดใช้งาน "${promo.display_name}"?`)) return;
@@ -75,54 +77,60 @@ export default function AdminPromosPage() {
       title="คลังโปรโมชั่น"
       subtitle="สร้างและแจก code ส่วนลด — ลูกค้าได้รับสิทธิ์ทันที ราคาบนเว็บหลังลดอัตโนมัติ"
       action={
-        <Link to="/admin/promos/new" className="btn-admin-primary shrink-0">
-          + สร้างโปรใหม่
+        <Link to="/admin/promos/new" className="btn-admin-primary shrink-0 lg:hidden">
+          + สร้างโปร
         </Link>
       }
     >
-      {!loading && promos.length > 0 && <AdminStatGrid stats={stats} />}
+      <div className="promo-vault mt-6">
+        {!loading && promos.length > 0 && <PromoVaultStats promos={promos} />}
 
-      <div className="admin-filter-bar mt-6">
-        <FilterChip active={filterType === 'all'} onClick={() => setFilterType('all')} label="ทั้งหมด" />
-        {PROMO_TYPE_LIST.map((type) => (
-          <FilterChip
-            key={type}
-            active={filterType === type}
-            onClick={() => setFilterType(type)}
-            label={PROMO_TYPE_LABELS[type]}
+        <PromoVaultMobileFilters
+          promos={promos}
+          statusFilter={statusFilter}
+          typeFilter={typeFilter}
+          onStatusChange={setStatusFilter}
+          onTypeChange={setTypeFilter}
+        />
+
+        <div className="promo-vault__layout">
+          <PromoVaultSidebarFilters
+            promos={promos}
+            statusFilter={statusFilter}
+            typeFilter={typeFilter}
+            onStatusChange={setStatusFilter}
+            onTypeChange={setTypeFilter}
           />
-        ))}
-      </div>
+          <div className="promo-vault__main">
+            {!loading && promos.length > 0 && (
+              <PromoVaultSearch
+                value={query}
+                onChange={setQuery}
+                sort={sort}
+                onSortChange={setSort}
+              />
+            )}
 
-      {loading ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="admin-card admin-card--pad space-y-3">
-              <Skeleton className="h-5 w-20" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="admin-card admin-card--pad py-10 text-center">
-          <p className="text-body">ยังไม่มีโปรในคลัง</p>
-          <Link to="/admin/promos/new" className="btn-admin-primary mt-4 inline-flex">
-            สร้างโปรแรก
-          </Link>
-        </div>
-      ) : filterType === 'all' ? (
-        <div className="space-y-8">
-          {PROMO_TYPE_LIST.map((type) =>
-            grouped[type]?.length ? (
-              <section key={type} className="space-y-3">
-                <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
-                  {PROMO_TYPE_LABELS[type]}
-                </h2>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {grouped[type].map((promo) => (
-                    <PromoCard
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="promo-vault-skeleton-card space-y-3">
+                    <Skeleton className="h-8 w-32" />
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+                <div className="hidden lg:block promo-vault-table-wrap p-4">
+                  <Skeleton className="h-64 w-full" />
+                </div>
+              </div>
+            ) : filtered.length === 0 ? (
+              <PromoVaultEmpty filtered={hasFilters || promos.length > 0} />
+            ) : (
+              <>
+                <div className="promo-vault-mobile-list">
+                  {filtered.map((promo) => (
+                    <PromoVaultCard
                       key={promo.id}
                       promo={promo}
                       onDistribute={() => setDistributePromo(promo)}
@@ -130,24 +138,18 @@ export default function AdminPromosPage() {
                     />
                   ))}
                 </div>
-              </section>
-            ) : null
-          )}
+                <PromoVaultTable
+                  promos={filtered}
+                  onDistribute={setDistributePromo}
+                  onRevoke={handleRevoke}
+                />
+              </>
+            )}
+          </div>
         </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map((promo) => (
-            <PromoCard
-              key={promo.id}
-              promo={promo}
-              onDistribute={() => setDistributePromo(promo)}
-              onRevoke={() => handleRevoke(promo)}
-            />
-          ))}
-        </div>
-      )}
+      </div>
 
-      <PromoDistributeSheet
+      <PromoVaultDistribute
         promo={distributePromo}
         open={Boolean(distributePromo)}
         onClose={() => setDistributePromo(null)}
@@ -157,58 +159,5 @@ export default function AdminPromosPage() {
         }}
       />
     </AdminPageShell>
-  );
-}
-
-function FilterChip({ active, onClick, label }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`admin-filter-chip ${active ? 'admin-filter-chip--active' : ''}`.trim()}
-    >
-      {label}
-    </button>
-  );
-}
-
-function PromoCard({ promo, onDistribute, onRevoke }) {
-  return (
-    <article className="admin-card admin-card--pad flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`${statusBadgeClass(promo.status)} text-xs`}>
-            {getStatusLabel(promo.status)}
-          </span>
-          <span className="badge-pill text-xs">{PROMO_TYPE_LABELS[promo.promo_type]}</span>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="font-display text-lg text-ink">{promo.display_name}</h3>
-        <p className="mt-1 text-base font-semibold text-primary">{formatPromoDiscount(promo)}</p>
-      </div>
-
-      <div className="space-y-1 text-xs text-muted">
-        <p>{formatPromoPeriod(promo)}</p>
-        {promo.grant_count > 0 && <p>แจกแล้ว {promo.grant_count} ราย</p>}
-      </div>
-
-      <div className="admin-promo-card__actions">
-        <Link to={`/admin/promos/${promo.id}/edit`} className="btn-ghost min-h-[44px] text-sm">
-          แก้ไข
-        </Link>
-        {promo.status !== 'inactive' && (
-          <>
-            <button type="button" onClick={onDistribute} className="btn-secondary min-h-[44px] text-sm">
-              แจกโปร
-            </button>
-            <button type="button" onClick={onRevoke} className="btn-admin-danger min-h-[44px] text-sm">
-              ปิดใช้งาน
-            </button>
-          </>
-        )}
-      </div>
-    </article>
   );
 }

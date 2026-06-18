@@ -1,11 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from './AuthContext.jsx';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'times_shop_cart_v1';
+const GUEST_STORAGE_KEY = 'times_shop_cart_guest_v1';
 
-function readCart() {
+function readCart(key = STORAGE_KEY) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
@@ -13,16 +15,56 @@ function readCart() {
   }
 }
 
+function mergeCartItems(existing, incoming) {
+  const map = new Map(existing.map((i) => [i.tiktok_sku_id, { ...i }]));
+  for (const item of incoming) {
+    const prev = map.get(item.tiktok_sku_id);
+    if (prev) {
+      const stock = item.stock_available ?? prev.stock_available ?? 99;
+      map.set(item.tiktok_sku_id, {
+        ...prev,
+        ...item,
+        quantity: Math.min(prev.quantity + item.quantity, stock),
+      });
+    } else {
+      map.set(item.tiktok_sku_id, item);
+    }
+  }
+  return [...map.values()].filter((i) => i.quantity > 0);
+}
+
 export function CartProvider({ children }) {
-  const [items, setItems] = useState(readCart);
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const prevUserIdRef = useRef(userId);
+  const [items, setItems] = useState(() =>
+    readCart(userId ? STORAGE_KEY : GUEST_STORAGE_KEY)
+  );
 
   useEffect(() => {
+    const prev = prevUserIdRef.current;
+    if (!prev && userId) {
+      const guestItems = readCart(GUEST_STORAGE_KEY);
+      if (guestItems.length) {
+        setItems((current) => mergeCartItems(readCart(STORAGE_KEY), mergeCartItems(current, guestItems)));
+        try {
+          localStorage.removeItem(GUEST_STORAGE_KEY);
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    prevUserIdRef.current = userId;
+  }, [userId]);
+
+  useEffect(() => {
+    const key = userId ? STORAGE_KEY : GUEST_STORAGE_KEY;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(key, JSON.stringify(items));
     } catch {
       /* storage may be unavailable (private mode) — ignore */
     }
-  }, [items]);
+  }, [items, userId]);
 
   const addItem = useCallback((product, quantity = 1) => {
     setItems((prev) => {
@@ -79,7 +121,6 @@ export function CartProvider({ children }) {
     ]);
   }, []);
 
-  // Refresh prices/stock + drop unavailable SKUs after a server validate-cart call.
   const applyValidatedItems = useCallback((validated) => {
     setItems((prev) =>
       prev

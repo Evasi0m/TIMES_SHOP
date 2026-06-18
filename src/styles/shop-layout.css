@@ -18,6 +18,118 @@
   }
 }
 
+.announcement-bar {
+  position: sticky;
+  top: 56px;
+  z-index: 30;
+  height: 32px;
+  overflow: hidden;
+  background: rgb(var(--c-ink));
+  box-shadow: 0 4px 18px -6px rgb(var(--c-primary) / 0.35);
+  transition:
+    height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 768px) {
+  .announcement-bar {
+    top: 64px;
+  }
+}
+
+.announcement-bar:hover {
+  height: 48px;
+  box-shadow: 0 12px 34px -6px rgb(var(--c-primary) / 0.55);
+}
+
+.announcement-bar__viewport {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  overflow: hidden;
+}
+
+.announcement-bar__track {
+  display: flex;
+  width: max-content;
+  animation: announcement-marquee var(--marquee-duration, 30s) linear infinite;
+}
+
+.announcement-bar__content {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding-right: 3rem;
+  color: rgb(var(--c-on-dark));
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition:
+    font-size 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    letter-spacing 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.announcement-bar:hover .announcement-bar__content {
+  font-size: 13.5px;
+}
+
+.announcement-bar__sep {
+  opacity: 0.75;
+}
+
+.announcement-bar__link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.announcement-bar__link:hover {
+  color: rgb(var(--c-primary) / 1);
+}
+
+.announcement-bar--preview {
+  position: relative;
+  top: auto;
+  border-radius: 8px;
+}
+
+.announcement-bar__track--static {
+  animation: none;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.announcement-bar__track--static::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes announcement-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announcement-bar__track {
+    animation: none;
+    overflow-x: auto;
+    max-width: 100%;
+    scrollbar-width: none;
+  }
+
+  .announcement-bar__track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .announcement-bar__content[aria-hidden='true'] {
+    display: none;
+  }
+}
+
 .bottom-tab-bar {
   height: var(--mobile-tabbar-h);
   padding-bottom: env(safe-area-inset-bottom, 0px);

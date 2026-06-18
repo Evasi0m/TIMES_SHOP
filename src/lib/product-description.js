@@ -1,5 +1,19 @@
 /** Normalize TikTok product description for PDP display. */
 
+/** ~4 lines at text-sm / leading-relaxed — collapsed PDP description height. */
+export const PDP_DESCRIPTION_COLLAPSED_MAX_PX = 104;
+
+export function isDescriptionCollapsible(
+  fullHeightPx,
+  thresholdPx = PDP_DESCRIPTION_COLLAPSED_MAX_PX,
+) {
+  return fullHeightPx > thresholdPx + 1;
+}
+
+export function getDescriptionToggleLabel(expanded) {
+  return expanded ? 'ย่อ' : 'ดูเพิ่มเติม';
+}
+
 export function isHtmlDescription(text) {
   return /<img[\s>]/i.test(String(text || ''));
 }

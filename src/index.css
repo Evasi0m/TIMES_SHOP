@@ -4,7 +4,9 @@
 @import './styles/shop-layout.css';
 @import './styles/product-pdp.css';
 @import './styles/product-card.css';
+@import './styles/home.css';
 @import './styles/admin-panel.css';
+@import './styles/admin-promo-vault.css';
 
 @tailwind base;
 @tailwind components;
