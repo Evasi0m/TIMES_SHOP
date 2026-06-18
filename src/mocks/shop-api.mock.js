@@ -30,6 +30,7 @@ import {
   writePromoGrants,
 } from './promo.mock.js';
 import { enrichCasioFromModelCode } from '../lib/casio/enrich.js';
+import { parseDescriptionSpecs } from '../lib/product-description-format.js';
 import { COLOR_MAP, MATERIAL_MAP } from '../lib/casio/maps.js';
 import { SERIES_RULES } from '../lib/casio/series-rules.js';
 import { SERIES_SUBS } from '../lib/casio/sub-type-rules.js';
@@ -531,20 +532,22 @@ export const mockApi = {
     if (!productId) {
       return { ok: false, error: 'validation_failed', message: 'tiktok_product_id required' };
     }
+    const description =
+      'ขนาดตัวเรือน (ก x ย x ส)34.5 × 26.4 × 8.1 mm น้ำหนัก23 g วัสดุตัวเรือนและกรอบอะลูมิเนียm สายสายเรซิn กันน้ำกันน้ำลึก 50 เมตร';
     return {
       ok: true,
       tiktok_product_id: productId,
-      description:
-        'นาฬิกา CASIO สินค้าแท้ รับประกันศูนย์ 1 ปี\n\n' +
-        '• กันน้ำตามสเปกรุ่น\n' +
-        '• วัสดุเรซินทนทาน\n' +
-        '• เหมาะสำหรับใส่ทุกวัน',
+      description,
+      specs: parseDescriptionSpecs(description),
       cached: true,
     };
   },
 
-  async adminSyncDescriptions({ batch_size } = {}) {
+  async adminSyncDescriptions({ batch_size, backfill_parsed_specs } = {}) {
     await delay(200);
+    if (backfill_parsed_specs) {
+      return { ok: true, updated: 0, remaining_estimate: 0 };
+    }
     return {
       ok: true,
       synced: Math.min(Number(batch_size) || 25, 25),

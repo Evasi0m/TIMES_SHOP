@@ -73,10 +73,12 @@ while (remaining > 0) {
 
 Request: `{ "tiktok_product_id": "1734098765432109876" }`
 
-Response: `{ "ok": true, "description": "...", "cached": true|false }`
+Response: `{ "ok": true, "description": "...", "specs": [{ "key": "case_size", "label": "...", "value": "..." }], "cached": true|false }`
 
 ### `shop-admin-sync-descriptions` (admin)
 
-Request: `{ "batch_size": 25, "delay_ms": 300 }`
+Request: `{ "batch_size": 25, "delay_ms": 300 }`  
+หรือ backfill specs: `{ "backfill_parsed_specs": true, "batch_size": 50 }`
 
-Response: `{ "ok": true, "synced": 25, "skipped": 0, "failed": 0, "remaining_estimate": 1975 }`
+Response (sync): `{ "ok": true, "synced": 25, "skipped": 0, "failed": 0, "remaining_estimate": 1975 }`  
+Response (backfill): `{ "ok": true, "updated": 50, "remaining_estimate": 120 }`

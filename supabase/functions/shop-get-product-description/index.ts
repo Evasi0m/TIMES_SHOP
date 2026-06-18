@@ -19,11 +19,12 @@ Deno.serve(async (req) => {
 
   try {
     const db = createServiceClient();
-    const { description, cached } = await resolveProductDescription(db, productId);
+    const { description, specs, cached } = await resolveProductDescription(db, productId);
     return jsonResponse({
       ok: true,
       tiktok_product_id: productId,
       description,
+      specs,
       cached,
     });
   } catch (e) {

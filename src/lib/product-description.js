@@ -1,5 +1,9 @@
 /** Normalize TikTok product description for PDP display. */
 
+import { formatSpecLineBreaks } from './product-description-format.js';
+
+export { formatSpecLineBreaks, parseDescriptionSpecs, pickSummarySpecs } from './product-description-format.js';
+
 /** ~4 lines at text-sm / leading-relaxed — collapsed PDP description height. */
 export const PDP_DESCRIPTION_COLLAPSED_MAX_PX = 104;
 
@@ -42,9 +46,11 @@ export function normalizeDescription(raw) {
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'");
 
-  return text
+  text = text
     .replace(/\r\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]+\n/g, '\n')
     .trim();
+
+  return formatSpecLineBreaks(text);
 }

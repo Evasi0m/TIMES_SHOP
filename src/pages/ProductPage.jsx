@@ -20,8 +20,10 @@ import WishlistButton from '../components/product/WishlistButton.jsx';
 import VariantBuySheet from '../components/product/VariantBuySheet.jsx';
 import { trackRecentlyViewed, getRecentlyViewed } from '../hooks/useRecentlyViewed.js';
 import { buildViewSnapshot, shouldTrackProductView } from '../lib/homepage.js';
-import { isHtmlDescription } from '../lib/product-description.js';
+import { isHtmlDescription, parseDescriptionSpecs, pickSummarySpecs } from '../lib/product-description.js';
 import ProductDescriptionCard from '../components/product/ProductDescriptionCard.jsx';
+import ProductSpecSummary from '../components/product/ProductSpecSummary.jsx';
+import ProductSpecTable from '../components/product/ProductSpecTable.jsx';
 import PromoPriceDisplay from '../components/PromoPriceDisplay.jsx';
 import BannerAlert from '../components/ui/BannerAlert.jsx';
 import { Skeleton } from '../components/Skeleton.jsx';
@@ -43,6 +45,7 @@ export default function ProductPage() {
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(true);
   const [description, setDescription] = useState('');
+  const [descriptionSpecs, setDescriptionSpecs] = useState([]);
   const [descriptionLoading, setDescriptionLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState(null);
@@ -64,6 +67,7 @@ export default function ProductPage() {
     setNotFound(false);
     setError(null);
     setDescription('');
+    setDescriptionSpecs([]);
     setDescriptionLoading(false);
 
     const params = productId
@@ -113,9 +117,15 @@ export default function ProductPage() {
     shopApi.getProductDescription({ tiktok_product_id: productKey }).then((res) => {
       if (!active) return;
       if (res.ok) {
-        setDescription(String(res.description || '').trim());
+        const text = String(res.description || '').trim();
+        setDescription(text);
+        const specs = Array.isArray(res.specs) && res.specs.length
+          ? res.specs
+          : parseDescriptionSpecs(text);
+        setDescriptionSpecs(specs);
       } else {
         setDescription('');
+        setDescriptionSpecs([]);
       }
       setDescriptionLoading(false);
     }).catch(() => {
@@ -177,6 +187,11 @@ export default function ProductPage() {
   const recentlyViewed = useMemo(
     () => getRecentlyViewed(product?.tiktok_sku_id).slice(0, 8),
     [product?.tiktok_sku_id],
+  );
+
+  const summarySpecs = useMemo(
+    () => pickSummarySpecs(descriptionSpecs, 4),
+    [descriptionSpecs],
   );
 
   const hasAnyStock = useMemo(
@@ -382,10 +397,18 @@ export default function ProductPage() {
               <Skeleton className="h-4 w-2/3" />
             </div>
           ) : description ? (
-            <ProductDescriptionCard
-              description={description}
-              html={isHtmlDescription(description)}
-            />
+            <div className="space-y-3">
+              {summarySpecs.length > 0 ? (
+                <ProductSpecSummary specs={summarySpecs} />
+              ) : null}
+              {descriptionSpecs.length > 4 ? (
+                <ProductSpecTable specs={descriptionSpecs} />
+              ) : null}
+              <ProductDescriptionCard
+                description={description}
+                html={isHtmlDescription(description)}
+              />
+            </div>
           ) : (
             <div className="card-canvas p-6 text-center text-sm text-muted">
               ยังไม่มีคำอธิบายสินค้า
