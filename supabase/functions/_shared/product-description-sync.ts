@@ -117,7 +117,7 @@ export async function syncDescriptionBatch(
     };
   }
 
-  const posUrl = Deno.env.get('POS_SUPABASE_URL') || 'https://zrymhhkqdcttqsdczfcr.supabase.co';
+  const posUrl = Deno.env.get('POS_SUPABASE_URL') || 'https://pxenybeudcsddsnkduaj.supabase.co';
   const posKey = Deno.env.get('POS_SERVICE_ROLE_KEY') || '';
   const batchSize = Math.min(Math.max(Number(opts.batchSize) || DEFAULT_BATCH_SIZE, 1), 50);
   const delayMs = Math.min(Math.max(Number(opts.delayMs) || DEFAULT_DELAY_MS, 100), 2000);

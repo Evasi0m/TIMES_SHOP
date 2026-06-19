@@ -67,7 +67,7 @@ export async function isTikTokConfigured(): Promise<boolean> {
 }
 
 async function fetchViaPosBridge(productId: string): Promise<string | null> {
-  const posUrl = Deno.env.get('POS_SUPABASE_URL') || 'https://zrymhhkqdcttqsdczfcr.supabase.co';
+  const posUrl = Deno.env.get('POS_SUPABASE_URL') || 'https://pxenybeudcsddsnkduaj.supabase.co';
   const bridgeSecret = (Deno.env.get('SHOP_POS_BRIDGE_SECRET') || '').trim();
   const posKey = (Deno.env.get('POS_SERVICE_ROLE_KEY') || '').trim();
   const authKey = bridgeSecret || posKey;

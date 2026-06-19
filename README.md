@@ -20,7 +20,7 @@ npm run preview        # ทดสอบ build
 |--------|----------|
 | `VITE_SUPABASE_URL` | **Shop** project URL (`nfhrzxwunuvasdrujxwh`) — auth, promos, admin |
 | `VITE_SUPABASE_ANON_KEY` | Shop **anon key** เท่านั้น |
-| `VITE_POS_SUPABASE_URL` | **POS** project URL (`zrymhhkqdcttqsdczfcr`) — catalog |
+| `VITE_POS_SUPABASE_URL` | **POS** project URL (`pxenybeudcsddsnkduaj`) — catalog |
 | `VITE_POS_SUPABASE_ANON_KEY` | POS **anon key** — เรียก `shop-get-catalog` |
 | `VITE_SHOP_NAME` | ชื่อร้านที่แสดง (ค่าเริ่มต้น `TIMES STORE`) |
 | `VITE_USE_MOCK_API` | `true` = mock, `false` = Edge Functions จริง |

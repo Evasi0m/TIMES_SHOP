@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   const user = await getUser(req);
   const userId = body.user_id ?? user?.id ?? null;
 
-  const posUrl = Deno.env.get('POS_SUPABASE_URL') || 'https://zrymhhkqdcttqsdczfcr.supabase.co';
+  const posUrl = Deno.env.get('POS_SUPABASE_URL') || 'https://pxenybeudcsddsnkduaj.supabase.co';
   const posKey = Deno.env.get('POS_SERVICE_ROLE_KEY') || '';
   if (!posKey) {
     return jsonResponse({
